@@ -1,3 +1,5 @@
+from typing import override
+
 from flare_ai_rag.openrouter.client import OpenRouterClient
 from flare_ai_rag.router.base_router import BaseQueryRouter
 from flare_ai_rag.router.config import RouterConfig
@@ -9,7 +11,7 @@ class QueryRouter(BaseQueryRouter):
     classify a query as ANSWER, CLARIFY, or REJECT.
     """
 
-    def __init__(self, api_key: str, config: RouterConfig):
+    def __init__(self, api_key: str, config: RouterConfig) -> None:
         """
         Initialize the router with an API key and model name.
         :param api_key: Your OpenRouter API key.
@@ -18,6 +20,7 @@ class QueryRouter(BaseQueryRouter):
         self.config = config
         self.client = OpenRouterClient(api_key=api_key)
 
+    @override
     def route_query(self, query: str) -> str:
         """
         Analyze the query using the configured prompt and classify it.

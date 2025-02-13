@@ -9,7 +9,7 @@ from flare_ai_rag.utils import loader
 logger = structlog.get_logger(__name__)
 
 
-def main():
+def main() -> None:
     # Load Qdrant config
     config_json = loader.load_json(config.input_path / "input_parameters.json")
     qdrant_config = QdrantConfig.load(config_json["qdrant_config"])

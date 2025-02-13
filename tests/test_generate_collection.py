@@ -1,4 +1,3 @@
-
 import pandas as pd
 import structlog
 from qdrant_client import QdrantClient
@@ -18,7 +17,7 @@ def generate_collection(
     client: QdrantClient,
     qdrant_config: QdrantConfig,
     collection_name: str,
-):
+) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     # Create the collection.
     create_collection(client, collection_name, qdrant_config.vector_size)
@@ -45,7 +44,7 @@ def generate_collection(
             # Compute the embedding for the document content.
             embedding = embedding_model.encode(content).tolist()
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Error encoding document.", filename=row["Filename"], error=str(e)
             )
             continue
@@ -73,7 +72,7 @@ def generate_collection(
         logger.warning("No valid documents found to insert.")
 
 
-def main():
+def main() -> None:
     # Load Qdrant config
     config_json = loader.load_json(config.input_path / "input_parameters.json")
     qdrant_config = QdrantConfig.load(config_json["qdrant_config"])

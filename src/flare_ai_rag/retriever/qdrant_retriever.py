@@ -22,13 +22,15 @@ class QdrantRetriever(BaseRetriever):
     @override
     def semantic_search(self, query: str, top_k: int = 5) -> list[dict]:
         """
-        Perform semantic search by converting the query into a vector and searching in Qdrant.
+        Perform semantic search by converting the query into a vector
+        and searching in Qdrant.
 
         :param query: The input query.
         :param top_k: Number of top results to return.
         :return: A list of dictionaries, each representing a retrieved document.
         """
-        # Convert the query into a vector embedding using the SentenceTransformer instance.
+        # Convert the query into a vector embedding using the
+        # SentenceTransformer instance.
         query_vector = self.embedding_model.encode(query)
 
         # Search Qdrant for similar vectors.
@@ -41,11 +43,11 @@ class QdrantRetriever(BaseRetriever):
         # Process and return results.
         output = []
         for hit in results:
-            output.append(
-                {
-                    "text": hit.payload.get("text", ""),
-                    "score": hit.score,
-                    "metadata": {k: v for k, v in hit.payload.items() if k != "text"},
-                }
-            )
+            if hit.payload:
+                text = hit.payload.get("text", "")
+                metadata = {k: v for k, v in hit.payload.items() if k != "text"}
+            else:
+                text = ""
+                metadata = ""
+            output.append({"text": text, "score": hit.score, "metadata": metadata})
         return output
