@@ -1,7 +1,7 @@
 [project]
 name = "flare-ai-rag"
 version = "0.1.0"
-description = "Flare AI SDK for Retrieval-Augmented Generation (RAG)."
+description = "Flare AI Kit template for Retrieval-Augmented Generation (RAG)."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
