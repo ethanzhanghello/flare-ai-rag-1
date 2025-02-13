@@ -1,0 +1,14 @@
+{
+    "router_model": {
+        "id": "qwen/qwen-vl-plus:free",
+        "max_tokens": 20,
+        "temperature": 0
+    },
+    "qdrant_config": {
+        "embedding_model": "all-MiniLM-L6-v2",
+        "collection_name": "docs_collection",
+        "vector_size": 384,
+        "host": "localhost",
+        "port": 6333
+    }
+}
