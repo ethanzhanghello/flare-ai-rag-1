@@ -31,7 +31,7 @@ class QdrantRetriever(BaseRetriever):
         """
         # Convert the query into a vector embedding using the
         # SentenceTransformer instance.
-        query_vector = self.embedding_model.encode(query)
+        query_vector = self.embedding_model.encode(query).tolist()
 
         # Search Qdrant for similar vectors.
         results = self.client.search(

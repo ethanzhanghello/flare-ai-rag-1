@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 
+from flare_ai_rag.config import config
 from flare_ai_rag.openrouter.model import Model
-from flare_ai_rag.router.prompts import BASE_PROMPT
+from flare_ai_rag.utils import loader
+
+# Load base prompt
+BASE_PROMPT = loader.load_txt(config.input_path / "router" / "prompts.txt")
 
 
 @dataclass(frozen=True)
@@ -13,24 +17,18 @@ class RouterConfig:
     reject_option: str
 
     @staticmethod
-    def load(router_model: Model) -> "RouterConfig":
+    def load(model_config: dict) -> "RouterConfig":
         """Loads the router Model."""
-        # Define the classification options.
-        answer_option = "ANSWER"
-        clarify_option = "CLARIFY"
-        reject_option = "REJECT"
-
-        base_prompt = BASE_PROMPT.format(
-            answer_option=answer_option,
-            clarify_option=clarify_option,
-            reject_option=reject_option,
-            query="{query}",
+        model = Model(
+            model_id=model_config["id"],
+            max_tokens=model_config["max_tokens"],
+            temperature=model_config["temperature"],
         )
 
         return RouterConfig(
-            base_prompt=base_prompt,
-            model=router_model,
-            answer_option=answer_option,
-            clarify_option=clarify_option,
-            reject_option=reject_option,
+            base_prompt=BASE_PROMPT,
+            model=model,
+            answer_option="ANSWER",
+            clarify_option="CLARIFY",
+            reject_option="REJECT",
         )

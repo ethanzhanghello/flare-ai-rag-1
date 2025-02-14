@@ -1,7 +1,7 @@
 {
     "router_model": {
         "id": "qwen/qwen-vl-plus:free",
-        "max_tokens": 20,
+        "max_tokens": 5,
         "temperature": 0
     },
     "qdrant_config": {
@@ -10,5 +10,10 @@
         "vector_size": 384,
         "host": "localhost",
         "port": 6333
+    },
+    "responder_model": {
+        "id": "deepseek/deepseek-chat:free",
+        "max_tokens": 200,
+        "temperature": 0
     }
 }

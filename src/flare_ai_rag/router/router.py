@@ -3,6 +3,7 @@ from typing import override
 from flare_ai_rag.openrouter.client import OpenRouterClient
 from flare_ai_rag.router.base_router import BaseQueryRouter
 from flare_ai_rag.router.config import RouterConfig
+from flare_ai_rag.utils import parser
 
 
 class QueryRouter(BaseQueryRouter):
@@ -11,14 +12,14 @@ class QueryRouter(BaseQueryRouter):
     classify a query as ANSWER, CLARIFY, or REJECT.
     """
 
-    def __init__(self, api_key: str, config: RouterConfig) -> None:
+    def __init__(self, client: OpenRouterClient, config: RouterConfig) -> None:
         """
         Initialize the router with an API key and model name.
         :param api_key: Your OpenRouter API key.
         :param model: The model to use.
         """
         self.config = config
-        self.client = OpenRouterClient(api_key=api_key)
+        self.client = client
 
     @override
     def route_query(self, query: str) -> str:
@@ -29,16 +30,17 @@ class QueryRouter(BaseQueryRouter):
         :return: One of the classification options defined in the config.
         """
         # Set the base prompt
-        prompt = self.config.base_prompt.format(query=query)
+        prompt = self.config.base_prompt + f"\nQuery: {query}"
 
         payload = {
             "model": self.config.model.model_id,
             "messages": [{"role": "user", "content": prompt}],
         }
-
         # Get response
         response = self.client.send_chat_completion(payload)
-        classification = response["choices"][0]["message"]["content"].strip().upper()
+        classification = (
+            parser.parse_json_response(response).get("classification", "").upper()
+        )
 
         # Validate the classification.
         valid_options = {

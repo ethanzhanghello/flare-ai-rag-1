@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any
 
 
 def load_txt(file_path: Path) -> str:
@@ -8,7 +9,7 @@ def load_txt(file_path: Path) -> str:
         return f.read().strip()
 
 
-def load_json(file_path: Path) -> dict:
+def load_json(file_path: Path) -> dict[Any, Any]:
     """Read the selected model IDs from a JSON file."""
     with file_path.open() as f:
         return json.load(f)
