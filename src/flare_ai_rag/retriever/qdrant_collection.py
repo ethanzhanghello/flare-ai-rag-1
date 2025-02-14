@@ -41,7 +41,7 @@ def generate_collection(
     # For each document in the CSV, compute its embedding and prepare a Qdrant point.
     points = []
     for i, row in df_docs.iterrows():
-        doc_id = str(i)
+        doc_id = i
         content = row["Contents"]
 
         # Check if content is missing or not a string.

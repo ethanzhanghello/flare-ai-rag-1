@@ -11,4 +11,4 @@ def save_json(contents: dict, file_path: Path) -> None:
 
     with file_path.open("w") as f:
         json.dump(contents, f, indent=4)
-    logger.info("saved data", file_path=file_path)
+    logger.info("Saved data.", file_path=file_path)
