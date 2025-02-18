@@ -32,6 +32,7 @@ RUN wget https://github.com/qdrant/qdrant/releases/download/v1.13.4/qdrant-x86_6
 LABEL "tee.launch_policy.allow_env_override"="OPEN_ROUTER_API_KEY"
 LABEL "tee.launch_policy.log_redirect"="always"
 
-RUN chmod +x /app/start.sh
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 CMD ["/app/entrypoint.sh"]
