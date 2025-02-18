@@ -32,5 +32,4 @@ RUN wget https://github.com/qdrant/qdrant/releases/download/v1.13.4/qdrant-x86_6
 LABEL "tee.launch_policy.allow_env_override"="OPEN_ROUTER_API_KEY"
 LABEL "tee.launch_policy.log_redirect"="always"
 
-ENV PATH="/app/.venv/bin:$PATH"
 CMD ["uv", "run", "start-rag"]
