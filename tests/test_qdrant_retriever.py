@@ -1,17 +1,16 @@
 import structlog
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.config import config
-from flare_ai_rag.retriever.config import QdrantConfig
-from flare_ai_rag.retriever.qdrant_retriever import QdrantRetriever
-from flare_ai_rag.utils import loader
+from flare_ai_rag.retriever import QdrantConfig, QdrantRetriever
+from flare_ai_rag.settings import settings
+from flare_ai_rag.utils import load_json
 
 logger = structlog.get_logger(__name__)
 
 
 def main() -> None:
     # Load Qdrant config
-    config_json = loader.load_json(config.input_path / "input_parameters.json")
+    config_json = load_json(settings.input_path / "input_parameters.json")
     qdrant_config = QdrantConfig.load(config_json["qdrant_config"])
 
     # Initialize Qdrant client

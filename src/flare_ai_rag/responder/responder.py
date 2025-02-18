@@ -3,7 +3,7 @@ from typing import override
 from flare_ai_rag.openrouter.client import OpenRouterClient
 from flare_ai_rag.responder.base_responder import BaseResponder
 from flare_ai_rag.responder.config import ResponderConfig
-from flare_ai_rag.utils import parser
+from flare_ai_rag.utils import parse_chat_response
 
 
 class OpenRouterResponder(BaseResponder):
@@ -48,4 +48,4 @@ class OpenRouterResponder(BaseResponder):
         # Send the prompt to the OpenRouter API.
         response = self.client.send_chat_completion(payload)
 
-        return parser.parse_openrouter_response(response)
+        return parse_chat_response(response)

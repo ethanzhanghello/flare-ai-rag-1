@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from flare_ai_rag.config import config
 from flare_ai_rag.openrouter.model import Model
-from flare_ai_rag.utils import loader
+from flare_ai_rag.settings import settings
+from flare_ai_rag.utils import load_txt
 
 # Load base prompt
-BASE_PROMPT = loader.load_txt(config.input_path / "responder" / "prompts.txt")
+BASE_PROMPT = load_txt(settings.input_path / "responder" / "prompts.txt")
 
 
 @dataclass(frozen=True)

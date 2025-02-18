@@ -9,7 +9,7 @@ from flare_ai_rag.retriever.config import QdrantConfig
 logger = structlog.get_logger(__name__)
 
 
-def create_collection(
+def _create_collection(
     client: QdrantClient, collection_name: str, vector_size: int
 ) -> None:
     """
@@ -32,7 +32,7 @@ def generate_collection(
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     # Create the collection.
-    create_collection(client, collection_name, qdrant_config.vector_size)
+    _create_collection(client, collection_name, qdrant_config.vector_size)
     logger.info("Created the collection.", collection_name=collection_name)
 
     # Load the embedding model.
@@ -69,7 +69,7 @@ def generate_collection(
         }
 
         # Create a Qdrant point.
-        point = PointStruct(id=doc_id, vector=embedding, payload=payload)
+        point = PointStruct(id=doc_id, vector=embedding, payload=payload)  # pyright: ignore [reportArgumentType]
         points.append(point)
 
     if points:

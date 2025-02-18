@@ -3,7 +3,7 @@ from typing import override
 from flare_ai_rag.openrouter.client import OpenRouterClient
 from flare_ai_rag.router.base_router import BaseQueryRouter
 from flare_ai_rag.router.config import RouterConfig
-from flare_ai_rag.utils import parser
+from flare_ai_rag.utils import parse_chat_response_as_json
 
 
 class QueryRouter(BaseQueryRouter):
@@ -39,7 +39,7 @@ class QueryRouter(BaseQueryRouter):
         # Get response
         response = self.client.send_chat_completion(payload)
         classification = (
-            parser.parse_json_response(response).get("classification", "").upper()
+            parse_chat_response_as_json(response).get("classification", "").upper()
         )
 
         # Validate the classification.

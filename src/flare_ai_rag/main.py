@@ -2,16 +2,12 @@ import pandas as pd
 import structlog
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.config import config
-from flare_ai_rag.openrouter.client import OpenRouterClient
-from flare_ai_rag.responder.config import ResponderConfig
-from flare_ai_rag.responder.responder import OpenRouterResponder
-from flare_ai_rag.retriever.config import QdrantConfig
-from flare_ai_rag.retriever.qdrant_collection import generate_collection
-from flare_ai_rag.retriever.qdrant_retriever import QdrantRetriever
-from flare_ai_rag.router.config import RouterConfig
-from flare_ai_rag.router.router import QueryRouter
-from flare_ai_rag.utils import loader, saver
+from flare_ai_rag.openrouter import OpenRouterClient
+from flare_ai_rag.responder import OpenRouterResponder, ResponderConfig
+from flare_ai_rag.retriever import QdrantConfig, QdrantRetriever, generate_collection
+from flare_ai_rag.router import QueryRouter, RouterConfig
+from flare_ai_rag.settings import settings
+from flare_ai_rag.utils import load_json, load_txt, save_json
 
 logger = structlog.get_logger(__name__)
 
@@ -20,7 +16,7 @@ def setup_clients(input_config: dict) -> tuple[OpenRouterClient, QdrantClient]:
     """Initialize OpenRouter and Qdrant clients."""
     # Setup OpenRouter client.
     openrouter_client = OpenRouterClient(
-        api_key=config.open_router_api_key, base_url=config.open_router_base_url
+        api_key=settings.open_router_api_key, base_url=settings.open_router_base_url
     )
 
     # Setup Qdrant client.
@@ -70,7 +66,7 @@ def setup_retriever(
 
 def main() -> None:
     # Load input configuration.
-    input_config = loader.load_json(config.input_path / "input_parameters.json")
+    input_config = load_json(settings.input_path / "input_parameters.json")
 
     # Setup clients.
     openrouter_client, qdrant_client = setup_clients(input_config)
@@ -79,12 +75,12 @@ def main() -> None:
     router = setup_router(openrouter_client, input_config)
 
     # Process user query.
-    query = loader.load_txt(config.input_path / "query.txt")
+    query = load_txt(settings.input_path / "query.txt")
     classification = router.route_query(query)
     logger.info("Queried classified.", classification=classification)
 
     if classification == "ANSWER":
-        df_docs = pd.read_csv(config.data_path / "docs.csv", delimiter=",")
+        df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
         logger.info("Loaded CSV Data.", num_rows=len(df_docs))
 
         # Retrieve docs
@@ -102,8 +98,8 @@ def main() -> None:
         logger.info("Response retrieved.", answer=answer)
 
         # Save answer
-        output_file = config.data_path / "rag_answer.json"
-        saver.save_json(
+        output_file = settings.data_path / "rag_answer.json"
+        save_json(
             {
                 "query": query,
                 "answer": answer,
