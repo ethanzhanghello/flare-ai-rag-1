@@ -5,15 +5,23 @@
 
 Flare AI template for Retrieval-Augmented Generation (RAG).
 
+## 🚀 Key Features
+
+* **Modular Architecture**: Designed with independent components that can be easily extended.
+* **Qdrant-Powered Retrieval**: Leverages Qdrant for fast, semantic document retrieval, but can easily be adapted to other vector databases.
+* **Unified LLM Integration**: Supports over 300 models via OpenRouter, enabling flexible selection and integration of LLMs.
+* **Highly Configurable & Extensible**: Uses a straightforward JSON configuration system, enabling effortless integration of new features and services.
+
 ## 📌 Prerequisites
 
 Before getting started, ensure you have:
 
-- A **Python 3.12** environment.
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) installed for dependency management.
-- An [OpenRouter API Key](https://openrouter.ai/settings/keys).
+* A **Python 3.12** environment.
+* [uv](https://docs.astral.sh/uv/getting-started/installation/) installed for dependency management.
+* An [OpenRouter API Key](https://openrouter.ai/settings/keys).
+* Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
 
-## Environment Setup
+## 🏗️ Environment Setup
 
 ### Step 1: Install Dependencies
 
@@ -25,20 +33,27 @@ uv sync --all-extras
 
 ### Step 2: Configure Environment Variables
 
-Set your OpenRouter API key in your environment:
+Rename `.env.example` to `.env` and add in the variables (e.g. your [OpenRouter API Key](https://openrouter.ai/settings/keys)).
+
+Verify your available credits and get all supported models with:
 
 ```bash
-export OPENROUTER_API_KEY=<your-openrouter-api-key>
+uv run python -m tests.credits
+uv run python -m tests.models
 ```
 
-## 🚀 Running the Flare-AI-RAG
+## 🚀 Running the Flare-AI-RAG Locally
 
-- **Setup a Qdrant service**: make sure that Qdrant is up an running before running your script.
+### Step 1: Setup a Qdrant Service
+
+Make sure that Qdrant is up an running before running your script.
 You can quickly start a Qdrant instance using Docker:
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
+
+### Step 2: Configure Parameters and Run RAG
 
 The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
 
@@ -47,3 +62,18 @@ Once configured, add your query to `src/query.txt` and run:
 ```bash
 uv run start-rag
 ```
+
+## 🔜 Next Steps & Future Upgrades
+
+Design and implement a knowledge ingestion pipeline, with a demonstration interface showing practical applications for developers and users.
+All code uses the TEE Setup which can be found in the [flare-ai-defai](https://github.com/flare-foundation/flare-ai-defai) repository.
+
+_N.B._ Other vector databases can be used, provided they run within the same Docker container as the RAG system, since the deployment will occur in a TEE.
+
+* **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare’s GitHub, blogs, documentation). BigQuery integration would be desirable.
+* **Intelligent Query & Data Processing**: Use recommended AI models to refine the data processing pipeline, including pre-processing steps that optimize and clean incoming data, ensuring higher-quality context retrieval. (_e.g._ Use an LLM to reformulate or expand user queries before passing them to the retriever, improving the precision and recall of the semantic search.)
+* **Advanced Context Management**: Develop an intelligent context management system that:
+  * Implements Dynamic Relevance Scoring to rank documents by their contextual importance.
+  * Optimizes the Context Window to balance the amount of information sent to LLMs.
+  * Includes Source Verification Mechanisms to assess and validate the reliability of the data sources.
+* **Improved Retrieval & Response Pipelines**: Integrate hybrid search techniques (combining semantic and keyword-based methods) for better retrieval, and implement completion checks to verify that the responder’s output is complete and accurate (potentially allow an iterative feedback loop for refining the final answer).
