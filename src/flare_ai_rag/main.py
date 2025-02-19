@@ -15,13 +15,17 @@ logger = structlog.get_logger(__name__)
 def setup_clients(input_config: dict) -> tuple[OpenRouterClient, QdrantClient]:
     """Initialize OpenRouter and Qdrant clients."""
     # Setup OpenRouter client.
+    logger.info("Setting up Open Router client...")
     openrouter_client = OpenRouterClient(
         api_key=settings.open_router_api_key, base_url=settings.open_router_base_url
     )
+    logger.info("Open Router client has been set up.")
 
     # Setup Qdrant client.
+    logger.info("Setting up Qdrant client...")
     qdrant_config = QdrantConfig.load(input_config["qdrant_config"])
     qdrant_client = QdrantClient(host=qdrant_config.host, port=qdrant_config.port)
+    logger.info("Qdrant client has been set up.")
 
     return openrouter_client, qdrant_client
 
@@ -60,6 +64,7 @@ def setup_retriever(
         generate_collection(
             df_docs, qdrant_client, qdrant_config, collection_name=collection_name
         )
+        logger.info("The Qdrant collection has been generated.", collection_name=collection_name)
     # Return retriever
     return QdrantRetriever(client=qdrant_client, qdrant_config=qdrant_config)
 
@@ -77,7 +82,7 @@ def main() -> None:
     # Process user query.
     query = load_txt(settings.input_path / "query.txt")
     classification = router.route_query(query)
-    logger.info("Queried classified.", classification=classification)
+    logger.info("Queried has been classified by the Router.", classification=classification)
 
     if classification == "ANSWER":
         df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
@@ -91,11 +96,12 @@ def main() -> None:
             collection_name="docs_collection",
         )
         retrieved_docs = retriever.semantic_search(query, top_k=5)
+        logger.info("Docs have been retrieved.")
 
         # Prepare answer
         responder = setup_responder(openrouter_client, input_config)
         answer = responder.generate_response(query, retrieved_docs)
-        logger.info("Response retrieved.", answer=answer)
+        logger.info("Response has been generated.", answer=answer)
 
         # Save answer
         output_file = settings.data_path / "rag_answer.json"
@@ -106,7 +112,7 @@ def main() -> None:
             },
             output_file,
         )
-        logger.info("Response saved.", output_file=output_file)
+
     elif classification == "CLARIFY":
         logger.info("Your query needs clarification. Please provide more details.")
     elif classification == "REJECT":

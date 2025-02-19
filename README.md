@@ -21,19 +21,33 @@ Before getting started, ensure you have:
 * An [OpenRouter API Key](https://openrouter.ai/settings/keys).
 * Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
 
-## 🏗️ Environment Setup
+## 🏗️ Build & Run Instructions
 
-### Step 1: Install Dependencies
+You can deploy Flare AI RAG using Docker or set up the backend and frontend manually.
 
-Install all required dependencies by running:
+* **Environment Setup**: Rename `.env.example` to `.env` and add in the variables (e.g. your [OpenRouter API Key](https://openrouter.ai/settings/keys)).
+
+### Build using Docker
+
+* **Build the Docker Image**:
+
+```bash
+docker build -t flare-ai-rag .
+```
+
+* **Run the Docker Container**:
+
+```bash
+docker run -p 80:80 -it --env-file .env flare-ai-rag
+```
+
+### Build manually
+
+* **Install Dependencies**: Install all required dependencies by running:
 
 ```bash
 uv sync --all-extras
 ```
-
-### Step 2: Configure Environment Variables
-
-Rename `.env.example` to `.env` and add in the variables (e.g. your [OpenRouter API Key](https://openrouter.ai/settings/keys)).
 
 Verify your available credits and get all supported models with:
 
@@ -42,21 +56,16 @@ uv run python -m tests.credits
 uv run python -m tests.models
 ```
 
-## 🚀 Running the Flare-AI-RAG Locally
+* **Running the Flare-AI-RAG Locally**:
 
-### Step 1: Setup a Qdrant Service
-
-Make sure that Qdrant is up an running before running your script.
+* **Setup a Qdrant Service**: Make sure that Qdrant is up an running before running your script.
 You can quickly start a Qdrant instance using Docker:
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
-### Step 2: Configure Parameters and Run RAG
-
-The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
-
+* **Configure Parameters and Run RAG**: The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
 Once configured, add your query to `src/query.txt` and run:
 
 ```bash

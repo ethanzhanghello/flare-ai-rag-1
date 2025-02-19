@@ -36,4 +36,4 @@ class Settings(BaseSettings):
 
 # Create a global settings instance
 settings = Settings()
-logger.debug("settings initialized", settings=settings.model_dump())
+logger.debug("Settings have been initialized.", settings=settings.model_dump())

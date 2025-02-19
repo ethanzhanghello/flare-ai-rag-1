@@ -14,6 +14,7 @@ RUN apt-get update && \
     apt-get install -y \
     wget \
     tar \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -23,10 +24,10 @@ COPY --from=backend-builder /flare-ai-rag/pyproject.toml .
 COPY --from=backend-builder /flare-ai-rag/README.md .
 
 # Download and install Qdrant binary
-RUN wget https://github.com/qdrant/qdrant/releases/download/v1.13.4/qdrant-x86_64-unknown-linux-gnu.tar.gz && \
-    tar -xzf qdrant-x86_64-unknown-linux-gnu.tar.gz && \
+RUN wget https://github.com/qdrant/qdrant/releases/download/v1.13.4/qdrant-x86_64-unknown-linux-musl.tar.gz && \
+    tar -xzf qdrant-x86_64-unknown-linux-musl.tar.gz && \
     mv qdrant /usr/local/bin/ && \
-    rm qdrant-x86_64-unknown-linux-gnu.tar.gz
+    rm qdrant-x86_64-unknown-linux-musl.tar.gz
 
 # Allow workload operator to override environment variables
 LABEL "tee.launch_policy.allow_env_override"="OPEN_ROUTER_API_KEY"
