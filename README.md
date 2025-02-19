@@ -3,7 +3,7 @@
 
 # Flare AI RAG
 
-Flare AI template for Retrieval-Augmented Generation (RAG).
+Flare AI Kit template for Retrieval-Augmented Generation (RAG) Knowledge.
 
 ## 🚀 Key Features
 
@@ -55,8 +55,6 @@ Verify your available credits and get all supported models with:
 uv run python -m tests.credits
 uv run python -m tests.models
 ```
-
-* **Running the Flare-AI-RAG Locally**:
 
 * **Setup a Qdrant Service**: Make sure that Qdrant is up an running before running your script.
 You can quickly start a Qdrant instance using Docker:

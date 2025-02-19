@@ -64,7 +64,9 @@ def setup_retriever(
         generate_collection(
             df_docs, qdrant_client, qdrant_config, collection_name=collection_name
         )
-        logger.info("The Qdrant collection has been generated.", collection_name=collection_name)
+        logger.info(
+            "The Qdrant collection has been generated.", collection_name=collection_name
+        )
     # Return retriever
     return QdrantRetriever(client=qdrant_client, qdrant_config=qdrant_config)
 
@@ -82,7 +84,9 @@ def main() -> None:
     # Process user query.
     query = load_txt(settings.input_path / "query.txt")
     classification = router.route_query(query)
-    logger.info("Queried has been classified by the Router.", classification=classification)
+    logger.info(
+        "Queried has been classified by the Router.", classification=classification
+    )
 
     if classification == "ANSWER":
         df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
