@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "cryptography>=44.0.1",
-    "google>=3.0.0",
     "google-genai>=1.2.0",
     "google-generativeai>=0.8.4",
     "httpx>=0.28.1",
@@ -16,7 +15,6 @@ dependencies = [
     "pyjwt>=2.10.1",
     "pyopenssl>=25.0.0",
     "qdrant-client>=1.13.2",
-    "sentence-transformers>=3.4.1",
     "structlog>=25.1.0",
 ]
 
