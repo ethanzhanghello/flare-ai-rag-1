@@ -1,6 +1,7 @@
 import structlog
 from qdrant_client import QdrantClient
 
+from flare_ai_rag.ai import GeminiClient
 from flare_ai_rag.retriever import QdrantConfig, QdrantRetriever
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
@@ -16,8 +17,13 @@ def main() -> None:
     # Initialize Qdrant client
     client = QdrantClient(host=qdrant_config.host, port=qdrant_config.port)
 
+    # Initialize Gemini client
+    gemini_client = GeminiClient(api_key=settings.gemini_api_key)
+
     # Initialize the retriever.
-    retriever = QdrantRetriever(client=client, qdrant_config=qdrant_config)
+    retriever = QdrantRetriever(
+        client=client, qdrant_config=qdrant_config, gemini_client=gemini_client
+    )
 
     # Define a sample query.
     query = "What is Flare?"

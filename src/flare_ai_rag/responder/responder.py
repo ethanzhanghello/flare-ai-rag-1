@@ -1,6 +1,6 @@
 from typing import override
 
-from flare_ai_rag.openrouter.client import OpenRouterClient
+from flare_ai_rag.ai import OpenRouterClient
 from flare_ai_rag.responder.base_responder import BaseResponder
 from flare_ai_rag.responder.config import ResponderConfig
 from flare_ai_rag.utils import parse_chat_response

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from flare_ai_rag.openrouter.model import Model
+from flare_ai_rag.ai import Model
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_txt
 

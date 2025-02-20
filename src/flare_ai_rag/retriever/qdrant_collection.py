@@ -2,8 +2,8 @@ import pandas as pd
 import structlog
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
-from sentence_transformers import SentenceTransformer
 
+from flare_ai_rag.ai import GeminiClient
 from flare_ai_rag.retriever.config import QdrantConfig
 
 logger = structlog.get_logger(__name__)
@@ -26,17 +26,15 @@ def _create_collection(
 
 def generate_collection(
     df_docs: pd.DataFrame,
-    client: QdrantClient,
+    qdrant_client: QdrantClient,
     qdrant_config: QdrantConfig,
     collection_name: str,
+    gemini_client: GeminiClient,
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     # Create the collection.
-    _create_collection(client, collection_name, qdrant_config.vector_size)
+    _create_collection(qdrant_client, collection_name, qdrant_config.vector_size)
     logger.info("Created the collection.", collection_name=collection_name)
-
-    # Load the embedding model.
-    embedding_model = SentenceTransformer(qdrant_config.embedding_model)
 
     # For each document in the CSV, compute its embedding and prepare a Qdrant point.
     points = []
@@ -54,7 +52,9 @@ def generate_collection(
 
         try:
             # Compute the embedding for the document content.
-            embedding = embedding_model.encode(content).tolist()
+            embedding = gemini_client.embed_content(
+                model="text-embedding-004", contents=content
+            )
         except Exception as e:
             logger.exception(
                 "Error encoding document.", filename=row["Filename"], error=str(e)
@@ -74,7 +74,7 @@ def generate_collection(
 
     if points:
         # Upload the points into the Qdrant collection.
-        client.upsert(collection_name=collection_name, points=points)
+        qdrant_client.upsert(collection_name=collection_name, points=points)
         logger.info(
             "Collection generated and documents inserted into Qdrant successfully.",
             collection_name=collection_name,

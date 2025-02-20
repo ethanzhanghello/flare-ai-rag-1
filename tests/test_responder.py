@@ -1,6 +1,6 @@
 import structlog
 
-from flare_ai_rag.openrouter import OpenRouterClient
+from flare_ai_rag.ai import OpenRouterClient
 from flare_ai_rag.responder import OpenRouterResponder, ResponderConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json

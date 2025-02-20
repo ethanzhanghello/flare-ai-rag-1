@@ -1,4 +1,4 @@
-from flare_ai_rag.openrouter.base_client import AsyncBaseClient, BaseClient
+from flare_ai_rag.ai import AsyncBaseClient, BaseClient
 
 
 class OpenRouterClient(BaseClient):

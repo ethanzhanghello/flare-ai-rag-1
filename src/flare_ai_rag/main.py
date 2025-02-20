@@ -2,7 +2,7 @@ import pandas as pd
 import structlog
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.openrouter import OpenRouterClient
+from flare_ai_rag.ai import GeminiClient, OpenRouterClient
 from flare_ai_rag.responder import OpenRouterResponder, ResponderConfig
 from flare_ai_rag.retriever import QdrantConfig, QdrantRetriever, generate_collection
 from flare_ai_rag.router import QueryRouter, RouterConfig
@@ -54,6 +54,7 @@ def setup_retriever(
     qdrant_client: QdrantClient,
     input_config: dict,
     df_docs: pd.DataFrame,
+    gemini_client: GeminiClient,
     collection_name: str | None = None,
 ) -> QdrantRetriever:
     """Initialize the Qdrant retriever."""
@@ -62,13 +63,19 @@ def setup_retriever(
     # (Re)generate qdrant collection
     if collection_name:
         generate_collection(
-            df_docs, qdrant_client, qdrant_config, collection_name=collection_name
+            df_docs,
+            qdrant_client,
+            qdrant_config,
+            collection_name=collection_name,
+            gemini_client=gemini_client,
         )
         logger.info(
             "The Qdrant collection has been generated.", collection_name=collection_name
         )
     # Return retriever
-    return QdrantRetriever(client=qdrant_client, qdrant_config=qdrant_config)
+    return QdrantRetriever(
+        client=qdrant_client, qdrant_config=qdrant_config, gemini_client=gemini_client
+    )
 
 
 def main() -> None:
@@ -93,11 +100,13 @@ def main() -> None:
         logger.info("Loaded CSV Data.", num_rows=len(df_docs))
 
         # Retrieve docs
+        gemini_client = GeminiClient(api_key=settings.gemini_api_key)
         retriever = setup_retriever(
             qdrant_client,
             input_config,
             df_docs,
             collection_name="docs_collection",
+            gemini_client=gemini_client,
         )
         retrieved_docs = retriever.semantic_search(query, top_k=5)
         logger.info("Docs have been retrieved.")

@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     Combines both infrastructure and consensus settings.
     """
 
+    # Gemini Settings
+    gemini_base_url: str = ""
+    gemini_api_key: str = ""
+
     # OpenRouter Settings
     open_router_base_url: str = "https://openrouter.ai/api/v1"
     open_router_api_key: str = ""
