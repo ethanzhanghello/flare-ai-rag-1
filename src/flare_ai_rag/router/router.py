@@ -1,9 +1,61 @@
-from typing import override
+from typing import Any, override
 
-from flare_ai_rag.ai import OpenRouterClient
-from flare_ai_rag.router.base_router import BaseQueryRouter
+import structlog
+
+from flare_ai_rag.ai import GeminiProvider, OpenRouterClient
+from flare_ai_rag.router import BaseQueryRouter
 from flare_ai_rag.router.config import RouterConfig
-from flare_ai_rag.utils import parse_chat_response_as_json
+from flare_ai_rag.utils import (
+    parse_chat_response_as_json,
+    parse_gemini_response_as_json,
+)
+
+logger = structlog.get_logger(__name__)
+
+
+class GeminiRouter(BaseQueryRouter):
+    """
+    A simple query router that uses GCloud's Gemini
+    to classify a query as ANSWER, CLARIFY, or REJECT.
+    """
+
+    def __init__(self, client: GeminiProvider, config: RouterConfig) -> None:
+        """
+        Initialize the router with a GeminiProvider instance.
+        """
+        self.router_config = config
+        self.client = client
+
+    @override
+    def route_query(self, query: str) -> str:
+        """
+        Analyze the query using the configured prompt and classify it.
+        """
+        # Compose the prompt using the base prompt from config.
+        prompt = self.router_config.router_prompt + f"\nQuery: {query}"
+        logger.debug("Sending prompt...", prompt=prompt)
+        # Use the generate method of GeminiProvider to obtain a response.
+        response = self.client.generate(
+            prompt,
+            response_mime_type=None,
+            response_schema=None,
+        )
+        # Parse the response to extract classification.
+        classification = (
+            parse_gemini_response_as_json(response.raw_response)
+            .get("classification", "")
+            .upper()
+        )
+        # Validate the classification.
+        valid_options = {
+            self.router_config.answer_option,
+            self.router_config.clarify_option,
+            self.router_config.reject_option,
+        }
+        if classification not in valid_options:
+            classification = self.router_config.clarify_option
+
+        return classification
 
 
 class QueryRouter(BaseQueryRouter):
@@ -18,7 +70,7 @@ class QueryRouter(BaseQueryRouter):
         :param api_key: Your OpenRouter API key.
         :param model: The model to use.
         """
-        self.config = config
+        self.router_config = config
         self.client = client
 
     @override
@@ -30,12 +82,20 @@ class QueryRouter(BaseQueryRouter):
         :return: One of the classification options defined in the config.
         """
         # Set the base prompt
-        prompt = self.config.base_prompt + f"\nQuery: {query}"
+        prompt = self.router_config.router_prompt + f"\nQuery: {query}"
 
-        payload = {
-            "model": self.config.model.model_id,
-            "messages": [{"role": "user", "content": prompt}],
+        payload: dict[str, Any] = {
+            "messages": [
+                {"role": "system", "content": self.router_config.system_prompt},
+                {"role": "user", "content": prompt},
+            ],
         }
+
+        if self.router_config.model is not None:
+            payload["model"] = self.router_config.model.model_id
+            payload["max_tokens"] = self.router_config.model.max_tokens
+            payload["temperature"] = self.router_config.model.temperature
+
         # Get response
         response = self.client.send_chat_completion(payload)
         classification = (
@@ -44,11 +104,11 @@ class QueryRouter(BaseQueryRouter):
 
         # Validate the classification.
         valid_options = {
-            self.config.answer_option,
-            self.config.clarify_option,
-            self.config.reject_option,
+            self.router_config.answer_option,
+            self.router_config.clarify_option,
+            self.router_config.reject_option,
         }
         if classification not in valid_options:
-            classification = self.config.clarify_option
+            classification = self.router_config.clarify_option
 
         return classification

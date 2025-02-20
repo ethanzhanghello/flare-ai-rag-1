@@ -1,5 +1,97 @@
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
+
 import httpx
 import requests
+
+
+@dataclass
+class ModelResponse:
+    """Standardized response format for all AI models"""
+
+    text: str
+    raw_response: Any  # Original provider response
+    metadata: dict[str, Any]
+
+
+@runtime_checkable
+class GenerationConfig(Protocol):
+    """Protocol for generation configuration options"""
+
+    response_mime_type: str | None
+    response_schema: Any | None
+
+
+class BaseAIProvider(ABC):
+    """Abstract base class for AI providers"""
+
+    @abstractmethod
+    def __init__(self, api_key: str, model: str, **kwargs: str) -> None:
+        """Initialize the AI provider
+
+        Args:
+            api_key: API key for the service
+            model: Model identifier/name
+            **kwargs: Additional provider-specific configuration
+        """
+        self.api_key = api_key
+        self.model = model
+        self.chat_history: list[Any] = []
+
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset the conversation history"""
+
+    @abstractmethod
+    def reset_model(self, model: str, **kwargs: str) -> None:
+        """Completely reinitialize the generative model with new parameters,
+        and reset the chat session and history."""
+
+    @abstractmethod
+    def generate(
+        self,
+        prompt: str,
+        response_mime_type: str | None = None,
+        response_schema: Any | None = None,
+    ) -> ModelResponse:
+        """Generate a response without maintaining conversation context
+
+        Args:
+            prompt: Input text prompt
+            response_mime_type: Expected response format
+                (e.g., "text/plain", "application/json")
+            response_schema: Expected response structure schema
+
+        Returns:
+            ModelResponse containing the generated text and metadata
+        """
+
+    @abstractmethod
+    def send_message(self, msg: str) -> ModelResponse:
+        """Send a message in a conversational context
+
+        Args:
+            msg: Input message text
+
+        Returns:
+            ModelResponse containing the response text and metadata
+        """
+
+
+class CompletionRequest(TypedDict):
+    model: str
+    prompt: str
+
+
+class Message(TypedDict):
+    role: Literal["user", "assistant", "system"]
+    content: str
+
+
+class ChatRequest(TypedDict):
+    model: str
+    messages: list[Message]
 
 
 class BaseClient:
@@ -39,7 +131,11 @@ class BaseClient:
         msg = f"Error ({response.status_code}): {response.text}"
         raise ConnectionError(msg)
 
-    def _post(self, endpoint: str, json_payload: dict) -> dict:
+    def _post(
+        self,
+        endpoint: str,
+        json_payload: dict[str, Any] | CompletionRequest | ChatRequest,
+    ) -> dict:
         """
         Make a POST request to the API with a JSON payload and return the JSON response.
 
@@ -96,7 +192,11 @@ class AsyncBaseClient:
         msg = f"Error ({response.status_code}): {response.text}"
         raise ConnectionError(msg)
 
-    async def _post(self, endpoint: str, json_payload: dict) -> dict:
+    async def _post(
+        self,
+        endpoint: str,
+        json_payload: dict[str, Any] | CompletionRequest | ChatRequest,
+    ) -> dict:
         """
         Make an asynchronous POST request to the API with a JSON
         payload and return the JSON response.

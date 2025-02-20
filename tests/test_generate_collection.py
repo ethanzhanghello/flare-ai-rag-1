@@ -2,7 +2,7 @@ import pandas as pd
 import structlog
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.ai import GeminiClient
+from flare_ai_rag.ai import GeminiEmbedding
 from flare_ai_rag.retriever.config import QdrantConfig
 from flare_ai_rag.retriever.qdrant_collection import generate_collection
 from flare_ai_rag.settings import settings
@@ -24,14 +24,14 @@ def main() -> None:
     client = QdrantClient(host=qdrant_config.host, port=qdrant_config.port)
 
     # Initialize Gemini client
-    gemini_client = GeminiClient(api_key=settings.gemini_api_key)
+    embedding_client = GeminiEmbedding(api_key=settings.gemini_api_key)
 
     generate_collection(
         df_docs,
         client,
         qdrant_config,
         collection_name="docs_collection",
-        gemini_client=gemini_client,
+        embedding_client=embedding_client,
     )
 
 

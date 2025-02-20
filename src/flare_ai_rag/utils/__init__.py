@@ -3,6 +3,7 @@ from .parser_utils import (
     extract_author,
     parse_chat_response,
     parse_chat_response_as_json,
+    parse_gemini_response_as_json,
 )
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "load_txt",
     "parse_chat_response",
     "parse_chat_response_as_json",
+    "parse_gemini_response_as_json",
     "save_json",
 ]

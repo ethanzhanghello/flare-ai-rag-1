@@ -20,8 +20,12 @@ class Settings(BaseSettings):
     """
 
     # Gemini Settings
-    gemini_base_url: str = ""
+    gemini_model: str = "gemini-1.5-flash"
     gemini_api_key: str = ""
+
+    # Embedding Settings
+    gemini_embedding_model: str = "text-embedding-004"
+    gemini_vector_size: int = 384
 
     # OpenRouter Settings
     open_router_base_url: str = "https://openrouter.ai/api/v1"
@@ -30,7 +34,6 @@ class Settings(BaseSettings):
     # Path Settings
     data_path: Path = create_path("data")
     input_path: Path = create_path("flare_ai_rag")
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

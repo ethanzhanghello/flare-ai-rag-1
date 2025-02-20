@@ -1,32 +1,35 @@
 from dataclasses import dataclass
 
 from flare_ai_rag.ai import Model
-from flare_ai_rag.settings import settings
-from flare_ai_rag.utils import load_txt
-
-# Load base prompt
-BASE_PROMPT = load_txt(settings.input_path / "router" / "prompts.txt")
+from flare_ai_rag.router.prompts import ROUTER_INSTRUCTION, ROUTER_PROMPT
 
 
 @dataclass(frozen=True)
 class RouterConfig:
-    base_prompt: str
-    model: Model
+    system_prompt: str
+    router_prompt: str
+    model: Model | None
     answer_option: str
     clarify_option: str
     reject_option: str
 
     @staticmethod
-    def load(model_config: dict) -> "RouterConfig":
-        """Loads the router Model."""
-        model = Model(
-            model_id=model_config["id"],
-            max_tokens=model_config["max_tokens"],
-            temperature=model_config["temperature"],
-        )
+    def load(model_config: dict | None = None) -> "RouterConfig":
+        """Loads the router config."""
+        if not model_config:
+            # When using Gemini
+            model = None
+        else:
+            # When using OpenRouter
+            model = Model(
+                model_id=model_config["id"],
+                max_tokens=model_config["max_tokens"],
+                temperature=model_config["temperature"],
+            )
 
         return RouterConfig(
-            base_prompt=BASE_PROMPT,
+            system_prompt=ROUTER_INSTRUCTION,
+            router_prompt=ROUTER_PROMPT,
             model=model,
             answer_option="ANSWER",
             clarify_option="CLARIFY",

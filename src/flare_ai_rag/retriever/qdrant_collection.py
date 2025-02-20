@@ -3,8 +3,9 @@ import structlog
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
-from flare_ai_rag.ai import GeminiClient
+from flare_ai_rag.ai import GeminiEmbedding
 from flare_ai_rag.retriever.config import QdrantConfig
+from flare_ai_rag.settings import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -29,7 +30,7 @@ def generate_collection(
     qdrant_client: QdrantClient,
     qdrant_config: QdrantConfig,
     collection_name: str,
-    gemini_client: GeminiClient,
+    embedding_client: GeminiEmbedding,
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     # Create the collection.
@@ -52,8 +53,8 @@ def generate_collection(
 
         try:
             # Compute the embedding for the document content.
-            embedding = gemini_client.embed_content(
-                model="text-embedding-004", contents=content
+            embedding = embedding_client.embed_content(
+                embedding_model=settings.gemini_embedding_model, contents=content
             )
         except Exception as e:
             logger.exception(

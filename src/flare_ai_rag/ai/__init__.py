@@ -1,6 +1,13 @@
-from .base_client import AsyncBaseClient, BaseClient
-from .gemini import GeminiClient
+from .base import AsyncBaseClient, BaseClient
+from .gemini import GeminiEmbedding, GeminiProvider
 from .model import Model
 from .openrouter import OpenRouterClient
 
-__all__ = ["AsyncBaseClient", "BaseClient", "GeminiClient", "Model", "OpenRouterClient"]
+__all__ = [
+    "AsyncBaseClient",
+    "BaseClient",
+    "GeminiEmbedding",
+    "GeminiProvider",
+    "Model",
+    "OpenRouterClient",
+]

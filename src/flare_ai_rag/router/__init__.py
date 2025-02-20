@@ -1,5 +1,13 @@
-from .base_router import BaseQueryRouter
+from .base import BaseQueryRouter
 from .config import RouterConfig
-from .router import QueryRouter
+from .prompts import ROUTER_INSTRUCTION, ROUTER_PROMPT
+from .router import GeminiRouter, QueryRouter
 
-__all__ = ["BaseQueryRouter", "QueryRouter", "RouterConfig"]
+__all__ = [
+    "ROUTER_INSTRUCTION",
+    "ROUTER_PROMPT",
+    "BaseQueryRouter",
+    "GeminiRouter",
+    "QueryRouter",
+    "RouterConfig",
+]
