@@ -20,6 +20,7 @@ Before getting started, ensure you have:
 
 - A **Python 3.12** environment.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) installed for dependency management.
+- [Docker](https://www.docker.com/)
 - A [Gemini API key](https://aistudio.google.com/app/apikey).
 - Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
 
