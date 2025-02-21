@@ -1,4 +1,4 @@
 {
     "query": "What is the block time for the Flare blockchain?",
-    "answer": "The Flare blockchain produces a block approximately every 1.8 seconds [Document 0].\n"
+    "answer": "The Flare blockchain generates a new block approximately every 1.8 seconds [Document 0-overview.mdx].\n"
 }
