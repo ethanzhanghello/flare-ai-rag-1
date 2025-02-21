@@ -3,7 +3,7 @@ import structlog
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
-from flare_ai_rag.ai import GeminiEmbedding
+from flare_ai_rag.ai import EmbeddingTaskType, GeminiEmbedding
 from flare_ai_rag.retriever.config import RetrieverConfig
 
 logger = structlog.get_logger(__name__)
@@ -56,7 +56,10 @@ def generate_collection(
         try:
             # Compute the embedding for the document content.
             embedding = embedding_client.embed_content(
-                embedding_model=retriever_config.embedding_model, contents=content
+                embedding_model=retriever_config.embedding_model,
+                task_type=EmbeddingTaskType.RETRIEVAL_DOCUMENT,
+                contents=content,
+                title=str(row["Filename"]),
             )
         except Exception as e:
             logger.exception(
