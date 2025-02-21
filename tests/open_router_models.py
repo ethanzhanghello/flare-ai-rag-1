@@ -4,7 +4,7 @@ from flare_ai_rag.utils import save_json
 
 
 def get_models(client: OpenRouterClient) -> dict:
-    """List all available models.
+    """List all available OpenRouter models.
 
     :param client: the initialized OpenRouterClient.
     """

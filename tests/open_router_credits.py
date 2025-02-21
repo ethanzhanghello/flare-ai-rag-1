@@ -7,7 +7,7 @@ logger = structlog.get_logger(__name__)
 
 
 def get_credits(provider: OpenRouterClient) -> None:
-    # Retrieve available credits
+    """Retrieve available OpenRouter credits."""
     current_credits = provider.get_credits()
     logger.info("current credits", current_credits=current_credits)
 

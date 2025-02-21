@@ -7,10 +7,10 @@ Flare AI Kit template for Retrieval-Augmented Generation (RAG) Knowledge.
 
 ## 🚀 Key Features
 
-- **Modular Architecture**: Designed with independent components that can be easily extended.
-- **Qdrant-Powered Retrieval**: Leverages Qdrant for fast, semantic document retrieval, but can easily be adapted to other vector databases.
-- **Unified LLM Integration**: Supports over 300 models via OpenRouter, enabling flexible selection and integration of LLMs.
-- **Highly Configurable & Extensible**: Uses a straightforward JSON configuration system, enabling effortless integration of new features and services.
+- **Modular Architecture:** Designed with independent components that can be easily extended.
+- **Qdrant-Powered Retrieval:** Leverages Qdrant for fast, semantic document retrieval, but can easily be adapted to other vector databases.
+- **Highly Configurable & Extensible:** Uses a straightforward configuration system, enabling effortless integration of new features and services.
+- **Unified LLM Integration:** Leverages Gemini as a unified provider while maintaining compatibility with OpenRouter for a broader range of models.
 
 ## 📌 Prerequisites
 
@@ -18,57 +18,54 @@ Before getting started, ensure you have:
 
 - A **Python 3.12** environment.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) installed for dependency management.
-- An [OpenRouter API Key](https://openrouter.ai/settings/keys).
+- A [Gemini API key](https://aistudio.google.com/app/apikey).
 - Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
 
 ## 🏗️ Build & Run Instructions
 
 You can deploy Flare AI RAG using Docker or set up the backend and frontend manually.
 
-- **Environment Setup**: Rename `.env.example` to `.env` and add in the variables (e.g. your [OpenRouter API Key](https://openrouter.ai/settings/keys)).
+- **Environment Setup:**
+   Rename `.env.example` to `.env` and add in the variables (e.g. your [Gemini API key](https://aistudio.google.com/app/apikey)).
 
 ### Build using Docker
 
-- **Build the Docker Image**:
+1. **Build the Docker Image:**
 
-```bash
-docker build -t flare-ai-rag .
-```
+   ```bash
+   docker build -t flare-ai-rag .
+   ```
 
-- **Run the Docker Container**:
+2. **Run the Docker Container:**
 
-```bash
-docker run -p 80:80 -it --env-file .env flare-ai-rag
-```
+   ```bash
+   docker run -p 80:80 -it --env-file .env flare-ai-rag
+   ```
 
 ### Build manually
 
-- **Install Dependencies**: Install all required dependencies by running:
+1. **Install Dependencies:**
+   Install all required dependencies by running:
 
-```bash
-uv sync --all-extras
-```
+   ```bash
+   uv sync --all-extras
+   ```
 
-Verify your available credits and get all supported models with:
+2. **Setup a Qdrant Service:**
+   Make sure that Qdrant is up an running before running your script.
+   You can quickly start a Qdrant instance using Docker:
 
-```bash
-uv run python -m tests.credits
-uv run python -m tests.models
-```
+   ```bash
+   docker run -p 6333:6333 qdrant/qdrant
+   ```
 
-- **Setup a Qdrant Service**: Make sure that Qdrant is up an running before running your script.
-  You can quickly start a Qdrant instance using Docker:
+3. **Configure Parameters and Run RAG:**
+   The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
+   Once configured, add your query to `src/query.txt` and run:
 
-```bash
-docker run -p 6333:6333 qdrant/qdrant
-```
-
-- **Configure Parameters and Run RAG**: The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
-  Once configured, add your query to `src/query.txt` and run:
-
-```bash
-uv run start-rag
-```
+    ```bash
+   uv run start-rag
+   ```
 
 ## 🚀 Deploy on TEE
 
@@ -76,18 +73,18 @@ Deploy on a [Confidential Space](https://cloud.google.com/confidential-computing
 
 ### Prerequisites
 
-- **Google Cloud Platform Account:**  
+- **Google Cloud Platform Account:**
   Access to the [`verifiable-ai-hackathon`](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) project is required.
 
-- **Gemini API Key:**  
+- **Gemini API Key:**
   Ensure your [Gemini API key](https://aistudio.google.com/app/apikey) is linked to the project.
 
-- **gcloud CLI:**  
+- **gcloud CLI:**
   Install and authenticate the [gcloud CLI](https://cloud.google.com/sdk/docs/install).
 
 ### Environment Configuration
 
-1. **Set Environment Variables:**  
+1. **Set Environment Variables:**
    Update your `.env` file with:
 
    ```bash
@@ -164,10 +161,10 @@ If you encounter issues, follow these steps:
    gcloud compute instances get-serial-port-output $INSTANCE_NAME --project=verifiable-ai-hackathon
    ```
 
-2. **Verify API Key(s):**  
+2. **Verify API Key(s):**
    Ensure that all API Keys are set correctly (e.g. `GEMINI_API_KEY`).
 
-3. **Check Firewall Settings:**  
+3. **Check Firewall Settings:**
    Confirm that your instance is publicly accessible on port `80`.
 
 ## 🔜 Next Steps & Future Upgrades

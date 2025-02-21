@@ -34,9 +34,8 @@ def setup_router(input_config: dict) -> GeminiRouter:
         model=settings.gemini_model,
         system_instruction=router_config.system_prompt,
     )
-    gemini_router = GeminiRouter(client=gemini_provider, config=router_config)
 
-    return gemini_router
+    return GeminiRouter(client=gemini_provider, config=router_config)
 
 
 def setup_retriever(
