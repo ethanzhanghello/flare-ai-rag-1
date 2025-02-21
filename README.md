@@ -7,35 +7,35 @@ Flare AI Kit template for Retrieval-Augmented Generation (RAG) Knowledge.
 
 ## 🚀 Key Features
 
-* **Modular Architecture**: Designed with independent components that can be easily extended.
-* **Qdrant-Powered Retrieval**: Leverages Qdrant for fast, semantic document retrieval, but can easily be adapted to other vector databases.
-* **Unified LLM Integration**: Supports over 300 models via OpenRouter, enabling flexible selection and integration of LLMs.
-* **Highly Configurable & Extensible**: Uses a straightforward JSON configuration system, enabling effortless integration of new features and services.
+- **Modular Architecture**: Designed with independent components that can be easily extended.
+- **Qdrant-Powered Retrieval**: Leverages Qdrant for fast, semantic document retrieval, but can easily be adapted to other vector databases.
+- **Unified LLM Integration**: Supports over 300 models via OpenRouter, enabling flexible selection and integration of LLMs.
+- **Highly Configurable & Extensible**: Uses a straightforward JSON configuration system, enabling effortless integration of new features and services.
 
 ## 📌 Prerequisites
 
 Before getting started, ensure you have:
 
-* A **Python 3.12** environment.
-* [uv](https://docs.astral.sh/uv/getting-started/installation/) installed for dependency management.
-* An [OpenRouter API Key](https://openrouter.ai/settings/keys).
-* Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
+- A **Python 3.12** environment.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) installed for dependency management.
+- An [OpenRouter API Key](https://openrouter.ai/settings/keys).
+- Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
 
 ## 🏗️ Build & Run Instructions
 
 You can deploy Flare AI RAG using Docker or set up the backend and frontend manually.
 
-* **Environment Setup**: Rename `.env.example` to `.env` and add in the variables (e.g. your [OpenRouter API Key](https://openrouter.ai/settings/keys)).
+- **Environment Setup**: Rename `.env.example` to `.env` and add in the variables (e.g. your [OpenRouter API Key](https://openrouter.ai/settings/keys)).
 
 ### Build using Docker
 
-* **Build the Docker Image**:
+- **Build the Docker Image**:
 
 ```bash
 docker build -t flare-ai-rag .
 ```
 
-* **Run the Docker Container**:
+- **Run the Docker Container**:
 
 ```bash
 docker run -p 80:80 -it --env-file .env flare-ai-rag
@@ -43,7 +43,7 @@ docker run -p 80:80 -it --env-file .env flare-ai-rag
 
 ### Build manually
 
-* **Install Dependencies**: Install all required dependencies by running:
+- **Install Dependencies**: Install all required dependencies by running:
 
 ```bash
 uv sync --all-extras
@@ -56,19 +56,119 @@ uv run python -m tests.credits
 uv run python -m tests.models
 ```
 
-* **Setup a Qdrant Service**: Make sure that Qdrant is up an running before running your script.
-You can quickly start a Qdrant instance using Docker:
+- **Setup a Qdrant Service**: Make sure that Qdrant is up an running before running your script.
+  You can quickly start a Qdrant instance using Docker:
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
-* **Configure Parameters and Run RAG**: The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
-Once configured, add your query to `src/query.txt` and run:
+- **Configure Parameters and Run RAG**: The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
+  Once configured, add your query to `src/query.txt` and run:
 
 ```bash
 uv run start-rag
 ```
+
+## 🚀 Deploy on TEE
+
+Deploy on a [Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview) using AMD SEV.
+
+### Prerequisites
+
+- **Google Cloud Platform Account:**  
+  Access to the `verifiable-ai-hackathon` project is required.
+
+- **Gemini API Key:**  
+  Ensure your [Gemini API key](https://aistudio.google.com/app/apikey) is linked to the project.
+
+- **gcloud CLI:**  
+  Install and authenticate the [gcloud CLI](https://cloud.google.com/sdk/docs/install).
+
+### Environment Configuration
+
+1. **Set Environment Variables:**  
+   Update your `.env` file with:
+
+   ```bash
+   TEE_IMAGE_REFERENCE=ghcr.io/flare-foundation/flare-ai-rag:main  # Replace with your repo build image
+   INSTANCE_NAME=<PROJECT_NAME-TEAM_NAME>
+   ```
+
+2. **Load Environment Variables:**
+
+   ```bash
+   source .env
+   ```
+
+   > **Reminder:** Run the above command in every new shell session.
+
+3. **Verify the Setup:**
+
+   ```bash
+   echo $TEE_IMAGE_REFERENCE # Expected output: Your repo build image
+   ```
+
+### Deploying to Confidential Space
+
+Run the following command:
+
+```bash
+gcloud compute instances create $INSTANCE_NAME \
+  --project=verifiable-ai-hackathon \
+  --zone=us-central1-b \
+  --machine-type=n2d-standard-2 \
+  --network-interface=network-tier=PREMIUM,nic-type=GVNIC,stack-type=IPV4_ONLY,subnet=default \
+  --metadata=tee-image-reference=$TEE_IMAGE_REFERENCE,\
+tee-container-log-redirect=true,\
+tee-env-GEMINI_API_KEY=$GEMINI_API_KEY,\
+  --maintenance-policy=MIGRATE \
+  --provisioning-model=STANDARD \
+  --service-account=confidential-sa@verifiable-ai-hackathon.iam.gserviceaccount.com \
+  --scopes=https://www.googleapis.com/auth/cloud-platform \
+  --min-cpu-platform="AMD Milan" \
+  --tags=flare-ai,http-server,https-server \
+  --create-disk=auto-delete=yes,\
+boot=yes,\
+device-name=$INSTANCE_NAME,\
+image=projects/confidential-space-images/global/images/confidential-space-debug-250100,\
+mode=rw,\
+size=11,\
+type=pd-standard \
+  --shielded-secure-boot \
+  --shielded-vtpm \
+  --shielded-integrity-monitoring \
+  --reservation-affinity=any \
+  --confidential-compute-type=SEV
+```
+
+#### Post-deployment
+
+After deployment, you should see an output similar to:
+
+```plaintext
+NAME          ZONE           MACHINE_TYPE    PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+rag-team1   us-central1-b  n2d-standard-2               10.128.0.18  34.41.127.200  RUNNING
+```
+
+It may take a few minutes for Confidential Space to complete startup checks.
+You can monitor progress via the [GCP Console](https://console.cloud.google.com/welcome?project=verifiable-ai-hackathon) by clicking **Serial port 1 (console)**.
+
+### 🔧 Troubleshooting
+
+If you encounter issues, follow these steps:
+
+1. **Check Logs:**
+
+   ```bash
+   gcloud compute instances get-serial-port-output $INSTANCE_NAME --project=verifiable-ai-hackathon
+   ```
+
+2. **Verify API Key(s):**  
+   Ensure that all API Keys are set correctly (e.g. `GEMINI_API_KEY`).
+
+3. **Check Firewall Settings:**  
+   Confirm that your instance is publicly accessible on port `80`.
 
 ## 🔜 Next Steps & Future Upgrades
 
@@ -77,10 +177,10 @@ All code uses the TEE Setup which can be found in the [flare-ai-defai](https://g
 
 _N.B._ Other vector databases can be used, provided they run within the same Docker container as the RAG system, since the deployment will occur in a TEE.
 
-* **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare’s GitHub, blogs, documentation). BigQuery integration would be desirable.
-* **Intelligent Query & Data Processing**: Use recommended AI models to refine the data processing pipeline, including pre-processing steps that optimize and clean incoming data, ensuring higher-quality context retrieval. (_e.g._ Use an LLM to reformulate or expand user queries before passing them to the retriever, improving the precision and recall of the semantic search.)
-* **Advanced Context Management**: Develop an intelligent context management system that:
-  * Implements Dynamic Relevance Scoring to rank documents by their contextual importance.
-  * Optimizes the Context Window to balance the amount of information sent to LLMs.
-  * Includes Source Verification Mechanisms to assess and validate the reliability of the data sources.
-* **Improved Retrieval & Response Pipelines**: Integrate hybrid search techniques (combining semantic and keyword-based methods) for better retrieval, and implement completion checks to verify that the responder’s output is complete and accurate (potentially allow an iterative feedback loop for refining the final answer).
+- **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare’s GitHub, blogs, documentation). BigQuery integration would be desirable.
+- **Intelligent Query & Data Processing**: Use recommended AI models to refine the data processing pipeline, including pre-processing steps that optimize and clean incoming data, ensuring higher-quality context retrieval. (_e.g._ Use an LLM to reformulate or expand user queries before passing them to the retriever, improving the precision and recall of the semantic search.)
+- **Advanced Context Management**: Develop an intelligent context management system that:
+  - Implements Dynamic Relevance Scoring to rank documents by their contextual importance.
+  - Optimizes the Context Window to balance the amount of information sent to LLMs.
+  - Includes Source Verification Mechanisms to assess and validate the reliability of the data sources.
+- **Improved Retrieval & Response Pipelines**: Integrate hybrid search techniques (combining semantic and keyword-based methods) for better retrieval, and implement completion checks to verify that the responder’s output is complete and accurate (potentially allow an iterative feedback loop for refining the final answer).
