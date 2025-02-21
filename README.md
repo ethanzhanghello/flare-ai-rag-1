@@ -12,7 +12,9 @@ Flare AI Kit template for Retrieval-Augmented Generation (RAG) Knowledge.
 - **Highly Configurable & Extensible:** Uses a straightforward configuration system, enabling effortless integration of new features and services.
 - **Unified LLM Integration:** Leverages Gemini as a unified provider while maintaining compatibility with OpenRouter for a broader range of models.
 
-## 📌 Prerequisites
+## 🎯 Getting Started
+
+### Prerequisites
 
 Before getting started, ensure you have:
 
@@ -21,14 +23,12 @@ Before getting started, ensure you have:
 - A [Gemini API key](https://aistudio.google.com/app/apikey).
 - Access to one of the Flare databases. (The [Flare Developer Hub](https://dev.flare.network/) is included in CSV format for local testing.)
 
-## 🏗️ Build & Run Instructions
+### Build & Run Instructions
 
 You can deploy Flare AI RAG using Docker or set up the backend and frontend manually.
 
 - **Environment Setup:**
    Rename `.env.example` to `.env` and add in the variables (e.g. your [Gemini API key](https://aistudio.google.com/app/apikey)).
-
-### Build using Docker
 
 1. **Build the Docker Image:**
 
@@ -42,7 +42,7 @@ You can deploy Flare AI RAG using Docker or set up the backend and frontend manu
    docker run -p 80:80 -it --env-file .env flare-ai-rag
    ```
 
-### Build manually
+## 🛠 Build Manually
 
 1. **Install Dependencies:**
    Install all required dependencies by running:
@@ -66,6 +66,50 @@ You can deploy Flare AI RAG using Docker or set up the backend and frontend manu
     ```bash
    uv run start-rag
    ```
+
+## 📁 Repo Structure
+
+```
+src/flare_ai_rag/
+├── ai/                     # AI Provider implementations
+│   ├── init.py        # Package initialization
+│   ├── base.py            # Abstract base classes
+│   ├── gemini.py          # Google Gemini integration
+│   ├── model.py           # Model definitions
+│   └── openrouter.py      # OpenRouter integration
+├── attestation/           # TEE security layer
+│   ├── init.py
+│   ├── simulated_token.txt
+│   ├── vtpm_attestation.py  # vTPM client
+│   └── vtpm_validation.py   # Token validation
+├── responder/            # Response generation
+│   ├── init.py
+│   ├── base.py           # Base responder interface
+│   ├── config.py         # Response configuration
+│   ├── prompts.py        # System prompts
+│   └── responder.py      # Main responder logic
+├── retriever/            # Document retrieval
+│   ├── init.py
+│   ├── base.py          # Base retriever interface
+│   ├── config.py        # Retriever configuration
+│   ├── qdrant_collection.py  # Qdrant collection management
+│   └── qdrant_retriever.py   # Qdrant implementation
+├── router/               # API routing
+│   ├── init.py
+│   ├── base.py          # Base router interface
+│   ├── config.py        # Router configuration
+│   ├── prompts.py       # Router prompts
+│   └── router.py        # Main routing logic
+├── utils/               # Utility functions
+│   ├── init.py
+│   ├── file_utils.py    # File operations
+│   └── parser_utils.py  # Input parsing
+├── init.py          # Package initialization
+├── input_parameters.json # Configuration parameters
+├── main.py              # Application entry point
+├── query.txt           # Sample queries
+└── settings.py         # Environment settings
+```
 
 ## 🚀 Deploy on TEE
 
@@ -167,7 +211,7 @@ If you encounter issues, follow these steps:
 3. **Check Firewall Settings:**
    Confirm that your instance is publicly accessible on port `80`.
 
-## 🔜 Next Steps & Future Upgrades
+## 💡 Next Steps
 
 Design and implement a knowledge ingestion pipeline, with a demonstration interface showing practical applications for developers and users.
 All code uses the TEE Setup which can be found in the [flare-ai-defai](https://github.com/flare-foundation/flare-ai-defai) repository.
