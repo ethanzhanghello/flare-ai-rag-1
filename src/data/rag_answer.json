@@ -1,4 +1,4 @@
 {
     "query": "What is the block time for the Flare blockchain?",
-    "answer": "The Flare blockchain generates a new block approximately every 1.8 seconds [Document 0-overview.mdx].\n"
+    "answer": "The provided text states that Flare's block time is approximately 1.8 seconds  [Document 1-intro.mdx, Document 0-overview.mdx].  Each block triggers the Flare Time Series Oracle (FTSO) to select data providers for updates [Document 0-overview.mdx].\n"
 }

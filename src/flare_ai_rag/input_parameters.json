@@ -3,7 +3,7 @@
         "id": "gemini-1.5-flash"
     },
     "retriever_config": {
-        "embedding_model": "text-embedding-004",
+        "embedding_model": "models/text-embedding-004",
         "vector_size": 768,
         "collection_name": "docs_collection",
         "host": "localhost",

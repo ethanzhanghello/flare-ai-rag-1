@@ -10,7 +10,12 @@ from typing import Any, override
 
 import structlog
 from google.generativeai.client import configure
-from google.generativeai.embedding import embed_content as _embed_content
+from google.generativeai.embedding import (
+    EmbeddingTaskType,
+)
+from google.generativeai.embedding import (
+    embed_content as _embed_content,
+)
 from google.generativeai.generative_models import ChatSession, GenerativeModel
 from google.generativeai.types import GenerationConfig
 
@@ -189,7 +194,13 @@ class GeminiEmbedding:
         """
         configure(api_key=api_key)
 
-    def embed_content(self, embedding_model: str, contents: str) -> list[float]:
+    def embed_content(
+        self,
+        embedding_model: str,
+        contents: str,
+        task_type: EmbeddingTaskType,
+        title: str | None = None,
+    ) -> list[float]:
         """
         Generate text embeddings using Gemini.
 
@@ -200,7 +211,9 @@ class GeminiEmbedding:
         Returns:
             list[float]: The generated embedding vector.
         """
-        response = _embed_content(model=embedding_model, content=contents)
+        response = _embed_content(
+            model=embedding_model, content=contents, task_type=task_type, title=title
+        )
         try:
             embedding = response["embedding"]
         except (KeyError, IndexError) as e:

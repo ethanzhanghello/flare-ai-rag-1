@@ -2,7 +2,7 @@ from typing import override
 
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.ai import GeminiEmbedding
+from flare_ai_rag.ai import EmbeddingTaskType, GeminiEmbedding
 from flare_ai_rag.retriever.base import BaseRetriever
 from flare_ai_rag.retriever.config import RetrieverConfig
 
@@ -31,7 +31,9 @@ class QdrantRetriever(BaseRetriever):
         """
         # Convert the query into a vector embedding using Gemini
         query_vector = self.embedding_client.embed_content(
-            embedding_model="text-embedding-004", contents=query
+            embedding_model="models/text-embedding-004",
+            contents=query,
+            task_type=EmbeddingTaskType.RETRIEVAL_QUERY,
         )
 
         # Search Qdrant for similar vectors.
