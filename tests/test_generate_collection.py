@@ -14,7 +14,7 @@ logger = structlog.get_logger(__name__)
 def main() -> None:
     # Load Qdrant config
     config_json = load_json(settings.input_path / "input_parameters.json")
-    retriever_config = RetrieverConfig.load(config_json["qdrant_config"])
+    retriever_config = RetrieverConfig.load(config_json["retriever_config"])
 
     # Load the CSV file.
     df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
@@ -30,7 +30,6 @@ def main() -> None:
         df_docs,
         client,
         retriever_config,
-        collection_name="docs_collection",
         embedding_client=embedding_client,
     )
 

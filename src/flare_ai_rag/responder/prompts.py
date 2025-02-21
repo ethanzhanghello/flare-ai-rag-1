@@ -6,7 +6,8 @@ generate a final response that directly answers the query.
 
 Guidelines:
 - Use the provided context to support your answer. If applicable,
-include citations referring to the context (e.g., "[Document <name>]" or "[Source <name>]").
+include citations referring to the context (e.g., "[Document <name>]" or
+"[Source <name>]").
 - Be clear, factual, and concise. Do not introduce any information that isn't
 explicitly supported by the context.
 - Maintain a professional tone and ensure that all technical details are accurate.

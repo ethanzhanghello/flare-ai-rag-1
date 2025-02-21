@@ -32,7 +32,6 @@ def setup_retriever(
     qdrant_client: QdrantClient,
     input_config: dict,
     df_docs: pd.DataFrame,
-    collection_name: str | None = None,
 ) -> QdrantRetriever:
     """Initialize the Qdrant retriever."""
     # Set up Qdrant config
@@ -41,17 +40,16 @@ def setup_retriever(
     # Set up Gemini Embedding client
     embedding_client = GeminiEmbedding(settings.gemini_api_key)
     # (Re)generate qdrant collection
-    if collection_name:
-        generate_collection(
-            df_docs,
-            qdrant_client,
-            retriever_config,
-            collection_name=collection_name,
-            embedding_client=embedding_client,
-        )
-        logger.info(
-            "The Qdrant collection has been generated.", collection_name=collection_name
-        )
+    generate_collection(
+        df_docs,
+        qdrant_client,
+        retriever_config,
+        embedding_client=embedding_client,
+    )
+    logger.info(
+        "The Qdrant collection has been generated.",
+        collection_name=retriever_config.collection_name,
+    )
     # Return retriever
     return QdrantRetriever(
         client=qdrant_client,
@@ -100,9 +98,7 @@ def main() -> None:
     qdrant_client = setup_qdrant(input_config)
 
     # Set up retriever. (Use Gemini Embedding.)
-    retriever = setup_retriever(
-        qdrant_client, input_config, df_docs, collection_name="docs_collection"
-    )
+    retriever = setup_retriever(qdrant_client, input_config, df_docs)
 
     # Set up responder. (Use Gemini Provider.)
     responder = setup_responder(input_config)

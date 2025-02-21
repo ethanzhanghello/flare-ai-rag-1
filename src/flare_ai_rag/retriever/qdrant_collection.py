@@ -28,13 +28,16 @@ def generate_collection(
     df_docs: pd.DataFrame,
     qdrant_client: QdrantClient,
     retriever_config: RetrieverConfig,
-    collection_name: str,
     embedding_client: GeminiEmbedding,
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     # Create the collection.
-    _create_collection(qdrant_client, collection_name, retriever_config.vector_size)
-    logger.info("Created the collection.", collection_name=collection_name)
+    _create_collection(
+        qdrant_client, retriever_config.collection_name, retriever_config.vector_size
+    )
+    logger.info(
+        "Created the collection.", collection_name=retriever_config.collection_name
+    )
 
     # For each document in the CSV, compute its embedding and prepare a Qdrant point.
     points = []
@@ -74,10 +77,12 @@ def generate_collection(
 
     if points:
         # Upload the points into the Qdrant collection.
-        qdrant_client.upsert(collection_name=collection_name, points=points)
+        qdrant_client.upsert(
+            collection_name=retriever_config.collection_name, points=points
+        )
         logger.info(
             "Collection generated and documents inserted into Qdrant successfully.",
-            collection_name=collection_name,
+            collection_name=retriever_config.collection_name,
             num_points=len(points),
         )
     else:

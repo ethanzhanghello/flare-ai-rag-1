@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 def main() -> None:
     # Load Qdrant config
     config_json = load_json(settings.input_path / "input_parameters.json")
-    retriever_config = RetrieverConfig.load(config_json["qdrant_config"])
+    retriever_config = RetrieverConfig.load(config_json["retriever_config"])
 
     # Initialize Qdrant client
     client = QdrantClient(host=retriever_config.host, port=retriever_config.port)
