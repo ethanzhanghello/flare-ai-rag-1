@@ -46,7 +46,11 @@ class QdrantRetriever(BaseRetriever):
         for hit in results:
             if hit.payload:
                 text = hit.payload.get("text", "")
-                metadata = {k: v for k, v in hit.payload.items() if k != "text"}
+                metadata = {
+                    field: value
+                    for field, value in hit.payload.items()
+                    if field != "text"
+                }
             else:
                 text = ""
                 metadata = ""
