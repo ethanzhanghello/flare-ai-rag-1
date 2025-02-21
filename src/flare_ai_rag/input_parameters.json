@@ -1,19 +1,15 @@
 {
     "router_model": {
-        "id": "qwen/qwen-vl-plus:free",
-        "max_tokens": 50,
-        "temperature": 0
+        "id": "gemini-1.5-flash"
     },
-    "qdrant_config": {
-        "embedding_model": "all-MiniLM-L6-v2",
-        "collection_name": "docs_collection",
+    "retriever_config": {
+        "embedding_model": "text-embedding-004",
         "vector_size": 768,
+        "collection_name": "docs_collection",
         "host": "localhost",
         "port": 6333
     },
     "responder_model": {
-        "id": "deepseek/deepseek-chat:free",
-        "max_tokens": 200,
-        "temperature": 0
+        "id": "gemini-1.5-flash"
     }
 }

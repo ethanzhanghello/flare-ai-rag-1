@@ -81,15 +81,16 @@ class OpenRouterResponder(BaseResponder):
         prompt = context + f"User query: {query}\n" + self.responder_config.query_prompt
         # Prepare the payload for the completion endpoint.
         payload: dict[str, Any] = {
+            "model": self.responder_config.model.model_id,
             "messages": [
                 {"role": "system", "content": self.responder_config.system_prompt},
                 {"role": "user", "content": prompt},
-            ]
+            ],
         }
 
-        if self.responder_config.model is not None:
-            payload["model"] = self.responder_config.model.model_id
+        if self.responder_config.model.max_tokens is not None:
             payload["max_tokens"] = self.responder_config.model.max_tokens
+        if self.responder_config.model.temperature is not None:
             payload["temperature"] = self.responder_config.model.temperature
 
         # Send the prompt to the OpenRouter API.

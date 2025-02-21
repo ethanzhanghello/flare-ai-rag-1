@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from flare_ai_rag.ai import Model
 from flare_ai_rag.router.prompts import ROUTER_INSTRUCTION, ROUTER_PROMPT
@@ -8,24 +9,19 @@ from flare_ai_rag.router.prompts import ROUTER_INSTRUCTION, ROUTER_PROMPT
 class RouterConfig:
     system_prompt: str
     router_prompt: str
-    model: Model | None
+    model: Model
     answer_option: str
     clarify_option: str
     reject_option: str
 
     @staticmethod
-    def load(model_config: dict | None = None) -> "RouterConfig":
+    def load(model_config: dict[str, Any]) -> "RouterConfig":
         """Loads the router config."""
-        if not model_config:
-            # When using Gemini
-            model = None
-        else:
-            # When using OpenRouter
-            model = Model(
-                model_id=model_config["id"],
-                max_tokens=model_config["max_tokens"],
-                temperature=model_config["temperature"],
-            )
+        model = Model(
+            model_id=model_config["id"],
+            max_tokens=model_config.get("max_tokens"),
+            temperature=model_config.get("temperature"),
+        )
 
         return RouterConfig(
             system_prompt=ROUTER_INSTRUCTION,

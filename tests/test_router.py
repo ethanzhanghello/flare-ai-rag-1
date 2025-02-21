@@ -27,12 +27,12 @@ def test_open_router(queries: list[str]) -> None:
 
 
 def test_gemini_router(queries: list[str]) -> None:
-    router_config = RouterConfig.load()
+    router_config = RouterConfig.load({"id": "gemini-1.5-flash"})
 
     # Initialize Gemini client
     client = GeminiProvider(
         api_key=settings.gemini_api_key,
-        model="gemini-1.5-flash",
+        model=router_config.model.model_id,
         system_instruction=router_config.system_prompt,
     )
     logger.info("Initialized Gemini Provider.")

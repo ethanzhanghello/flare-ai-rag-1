@@ -4,19 +4,19 @@ from qdrant_client import QdrantClient
 
 from flare_ai_rag.ai import GeminiEmbedding
 from flare_ai_rag.retriever.base import BaseRetriever
-from flare_ai_rag.retriever.config import QdrantConfig
+from flare_ai_rag.retriever.config import RetrieverConfig
 
 
 class QdrantRetriever(BaseRetriever):
     def __init__(
         self,
         client: QdrantClient,
-        qdrant_config: QdrantConfig,
+        retriever_config: RetrieverConfig,
         embedding_client: GeminiEmbedding,
     ) -> None:
         """Initialize the QdrantRetriever."""
         self.client = client
-        self.qdrant_config = qdrant_config
+        self.retriever_config = retriever_config
         self.embedding_client = embedding_client
 
     @override
@@ -36,7 +36,7 @@ class QdrantRetriever(BaseRetriever):
 
         # Search Qdrant for similar vectors.
         results = self.client.search(
-            collection_name=self.qdrant_config.collection_name,
+            collection_name=self.retriever_config.collection_name,
             query_vector=query_vector,
             limit=top_k,
         )

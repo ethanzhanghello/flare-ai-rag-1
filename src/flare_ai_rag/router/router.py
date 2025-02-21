@@ -85,15 +85,16 @@ class QueryRouter(BaseQueryRouter):
         prompt = self.router_config.router_prompt + f"\nQuery: {query}"
 
         payload: dict[str, Any] = {
+            "model": self.router_config.model.model_id,
             "messages": [
                 {"role": "system", "content": self.router_config.system_prompt},
                 {"role": "user", "content": prompt},
             ],
         }
 
-        if self.router_config.model is not None:
-            payload["model"] = self.router_config.model.model_id
+        if self.router_config.model.max_tokens is not None:
             payload["max_tokens"] = self.router_config.model.max_tokens
+        if self.router_config.model.temperature is not None:
             payload["temperature"] = self.router_config.model.temperature
 
         # Get response

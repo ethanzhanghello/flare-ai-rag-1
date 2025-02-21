@@ -9,12 +9,12 @@ logger = structlog.get_logger(__name__)
 
 def test_gemini_responder(query: str, retrieved_docs: list[dict]) -> None:
     # Set up Responder Config.
-    responder_config = ResponderConfig.load()
+    responder_config = ResponderConfig.load({"id": "gemini-1.5-flash"})
 
     # Set up a new Gemini Provider based on Responder Config.
     gemini_provider = GeminiProvider(
         api_key=settings.gemini_api_key,
-        model=settings.gemini_model,
+        model=responder_config.model.model_id,
         system_instruction=responder_config.system_prompt,
     )
 

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
-class QdrantConfig:
+class RetrieverConfig:
     """Configuration for the embedding model used in the retriever."""
 
     embedding_model: str
@@ -12,8 +13,8 @@ class QdrantConfig:
     port: int
 
     @staticmethod
-    def load(retriever_config: dict) -> "QdrantConfig":
-        return QdrantConfig(
+    def load(retriever_config: dict[str, Any]) -> "RetrieverConfig":
+        return RetrieverConfig(
             embedding_model=retriever_config["embedding_model"],
             collection_name=retriever_config["collection_name"],
             vector_size=retriever_config["vector_size"],

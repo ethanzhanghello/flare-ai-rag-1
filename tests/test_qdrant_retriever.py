@@ -2,7 +2,7 @@ import structlog
 from qdrant_client import QdrantClient
 
 from flare_ai_rag.ai import GeminiEmbedding
-from flare_ai_rag.retriever import QdrantConfig, QdrantRetriever
+from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
 
@@ -12,17 +12,19 @@ logger = structlog.get_logger(__name__)
 def main() -> None:
     # Load Qdrant config
     config_json = load_json(settings.input_path / "input_parameters.json")
-    qdrant_config = QdrantConfig.load(config_json["qdrant_config"])
+    retriever_config = RetrieverConfig.load(config_json["qdrant_config"])
 
     # Initialize Qdrant client
-    client = QdrantClient(host=qdrant_config.host, port=qdrant_config.port)
+    client = QdrantClient(host=retriever_config.host, port=retriever_config.port)
 
     # Initialize Gemini client
     embedding_client = GeminiEmbedding(api_key=settings.gemini_api_key)
 
     # Initialize the retriever.
     retriever = QdrantRetriever(
-        client=client, qdrant_config=qdrant_config, embedding_client=embedding_client
+        client=client,
+        retriever_config=retriever_config,
+        embedding_client=embedding_client,
     )
 
     # Define a sample query.

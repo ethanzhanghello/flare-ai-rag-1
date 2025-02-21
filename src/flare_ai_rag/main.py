@@ -4,22 +4,12 @@ from qdrant_client import QdrantClient
 
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
 from flare_ai_rag.responder import GeminiResponder, ResponderConfig
-from flare_ai_rag.retriever import QdrantConfig, QdrantRetriever, generate_collection
+from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_collection
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json, load_txt, save_json
 
 logger = structlog.get_logger(__name__)
-
-
-def setup_qdrant(input_config: dict) -> QdrantClient:
-    """Initialize Qdrant client."""
-    logger.info("Setting up Qdrant client...")
-    qdrant_config = QdrantConfig.load(input_config["qdrant_config"])
-    qdrant_client = QdrantClient(host=qdrant_config.host, port=qdrant_config.port)
-    logger.info("Qdrant client has been set up.")
-
-    return qdrant_client
 
 
 def setup_router(input_config: dict) -> GeminiRouter:
@@ -31,7 +21,7 @@ def setup_router(input_config: dict) -> GeminiRouter:
     # Setup Gemini client based on Router config
     gemini_provider = GeminiProvider(
         api_key=settings.gemini_api_key,
-        model=settings.gemini_model,
+        model=router_config.model.model_id,
         system_instruction=router_config.system_prompt,
     )
 
@@ -46,7 +36,7 @@ def setup_retriever(
 ) -> QdrantRetriever:
     """Initialize the Qdrant retriever."""
     # Set up Qdrant config
-    qdrant_config = QdrantConfig.load(input_config["qdrant_config"])
+    retriever_config = RetrieverConfig.load(input_config["retriever_config"])
 
     # Set up Gemini Embedding client
     embedding_client = GeminiEmbedding(settings.gemini_api_key)
@@ -55,7 +45,7 @@ def setup_retriever(
         generate_collection(
             df_docs,
             qdrant_client,
-            qdrant_config,
+            retriever_config,
             collection_name=collection_name,
             embedding_client=embedding_client,
         )
@@ -65,9 +55,19 @@ def setup_retriever(
     # Return retriever
     return QdrantRetriever(
         client=qdrant_client,
-        qdrant_config=qdrant_config,
+        retriever_config=retriever_config,
         embedding_client=embedding_client,
     )
+
+
+def setup_qdrant(input_config: dict) -> QdrantClient:
+    """Initialize Qdrant client."""
+    logger.info("Setting up Qdrant client...")
+    retriever_config = RetrieverConfig.load(input_config["retriever_config"])
+    qdrant_client = QdrantClient(host=retriever_config.host, port=retriever_config.port)
+    logger.info("Qdrant client has been set up.")
+
+    return qdrant_client
 
 
 def setup_responder(input_config: dict) -> GeminiResponder:
@@ -79,7 +79,7 @@ def setup_responder(input_config: dict) -> GeminiResponder:
     # Set up a new Gemini Provider based on Responder Config.
     gemini_provider = GeminiProvider(
         api_key=settings.gemini_api_key,
-        model=settings.gemini_model,
+        model=responder_config.model.model_id,
         system_instruction=responder_config.system_prompt,
     )
     return GeminiResponder(client=gemini_provider, responder_config=responder_config)

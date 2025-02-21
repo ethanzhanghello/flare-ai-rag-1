@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from flare_ai_rag.ai import Model
 from flare_ai_rag.responder.prompts import RESPONDER_INSTRUCTION, RESPONDER_PROMPT
@@ -6,23 +7,18 @@ from flare_ai_rag.responder.prompts import RESPONDER_INSTRUCTION, RESPONDER_PROM
 
 @dataclass(frozen=True)
 class ResponderConfig:
-    model: Model | None
+    model: Model
     system_prompt: str
     query_prompt: str
 
     @staticmethod
-    def load(model_config: dict | None = None) -> "ResponderConfig":
+    def load(model_config: dict[str, Any]) -> "ResponderConfig":
         """Loads the Responder config."""
-        if not model_config:
-            # When using Gemini
-            model = None
-        else:
-            # When using OpenRouter
-            model = Model(
-                model_id=model_config["id"],
-                max_tokens=model_config["max_tokens"],
-                temperature=model_config["temperature"],
-            )
+        model = Model(
+            model_id=model_config["id"],
+            max_tokens=model_config.get("max_tokens"),
+            temperature=model_config.get("temperature"),
+        )
 
         return ResponderConfig(
             model=model,

@@ -4,8 +4,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 from flare_ai_rag.ai import GeminiEmbedding
-from flare_ai_rag.retriever.config import QdrantConfig
-from flare_ai_rag.settings import settings
+from flare_ai_rag.retriever.config import RetrieverConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -28,13 +27,13 @@ def _create_collection(
 def generate_collection(
     df_docs: pd.DataFrame,
     qdrant_client: QdrantClient,
-    qdrant_config: QdrantConfig,
+    retriever_config: RetrieverConfig,
     collection_name: str,
     embedding_client: GeminiEmbedding,
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     # Create the collection.
-    _create_collection(qdrant_client, collection_name, qdrant_config.vector_size)
+    _create_collection(qdrant_client, collection_name, retriever_config.vector_size)
     logger.info("Created the collection.", collection_name=collection_name)
 
     # For each document in the CSV, compute its embedding and prepare a Qdrant point.
@@ -54,7 +53,7 @@ def generate_collection(
         try:
             # Compute the embedding for the document content.
             embedding = embedding_client.embed_content(
-                embedding_model=settings.gemini_embedding_model, contents=content
+                embedding_model=retriever_config.embedding_model, contents=content
             )
         except Exception as e:
             logger.exception(
