@@ -9,7 +9,10 @@ and message management while maintaining a consistent AI personality.
 from typing import Any, override
 
 import structlog
-from google import genai, generativeai
+from google.generativeai.client import configure
+from google.generativeai.embedding import embed_content as _embed_content
+from google.generativeai.generative_models import ChatSession, GenerativeModel
+from google.generativeai.types import GenerationConfig
 
 from flare_ai_rag.ai.base import BaseAIProvider, ModelResponse
 
@@ -55,9 +58,9 @@ class GeminiProvider(BaseAIProvider):
             **kwargs (str): Additional configuration parameters including:
                 - system_instruction: Custom system prompt for the AI personality
         """
-        generativeai.configure(api_key=api_key)
-        self.chat: generativeai.ChatSession | None = None
-        self.model = generativeai.GenerativeModel(
+        configure(api_key=api_key)
+        self.chat: ChatSession | None = None
+        self.model = GenerativeModel(
             model_name=model,
             system_instruction=kwargs.get("system_instruction", SYSTEM_INSTRUCTION),
         )
@@ -90,7 +93,7 @@ class GeminiProvider(BaseAIProvider):
         """
         new_system_instruction = kwargs.get("system_instruction", SYSTEM_INSTRUCTION)
         # Reinitialize the generative model.
-        self.model = generativeai.GenerativeModel(
+        self.model = GenerativeModel(
             model_name=model,
             system_instruction=new_system_instruction,
         )
@@ -126,7 +129,7 @@ class GeminiProvider(BaseAIProvider):
         """
         response = self.model.generate_content(
             prompt,
-            generation_config=generativeai.GenerationConfig(
+            generation_config=GenerationConfig(
                 response_mime_type=response_mime_type, response_schema=response_schema
             ),
         )
@@ -175,7 +178,7 @@ class GeminiProvider(BaseAIProvider):
         )
 
 
-class NewGeminiEmbedding:
+class GeminiEmbedding:
     def __init__(self, api_key: str) -> None:
         """
         Initialize Gemini with API credentials.
@@ -184,7 +187,7 @@ class NewGeminiEmbedding:
         Args:
             api_key (str): Google API key for authentication
         """
-        generativeai.configure(api_key=api_key)
+        configure(api_key=api_key)
 
     def embed_content(self, embedding_model: str, contents: str) -> list[float]:
         """
@@ -197,31 +200,10 @@ class NewGeminiEmbedding:
         Returns:
             list[float]: The generated embedding vector.
         """
-        response = generativeai.embed_content(model=embedding_model, content=contents)
+        response = _embed_content(model=embedding_model, content=contents)
         try:
             embedding = response["embedding"]
         except (KeyError, IndexError) as e:
             msg = "Failed to extract embedding from response."
             raise ValueError(msg) from e
         return embedding
-
-
-class GeminiEmbedding:
-    """
-    Initialize Gemini with API credentials.
-    """
-
-    def __init__(self, api_key: str) -> None:
-        """This client uses google.genai"""
-        self.client = genai.Client(api_key=api_key)
-
-    def embed_content(self, embedding_model: str, contents: str) -> list[float]:
-        result = self.client.models.embed_content(
-            model=embedding_model, contents=contents
-        )
-        embedding = result.embeddings
-
-        if not embedding or embedding[0].values is None:
-            msg = "No embedding was returned from the API."
-            raise ValueError(msg)
-        return embedding[0].values
