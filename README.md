@@ -28,8 +28,12 @@ Before getting started, ensure you have:
 
 You can deploy Flare AI RAG using Docker or set up the backend and frontend manually.
 
-- **Environment Setup:**
-   Rename `.env.example` to `.env` and add in the variables (e.g. your [Gemini API key](https://aistudio.google.com/app/apikey)).
+### Environment Setup
+
+1. **Prepare the Environment File:**
+   Rename `.env.example` to `.env` and update the variables accordingly. (e.g. your [Gemini API key](https://aistudio.google.com/app/apikey))
+
+### Build using Docker (Recommended) -- [WIP]
 
 1. **Build the Docker Image:**
 
@@ -43,10 +47,17 @@ You can deploy Flare AI RAG using Docker or set up the backend and frontend manu
    docker run -p 80:80 -it --env-file .env flare-ai-rag
    ```
 
-## 🛠 Build Manually
+3. **Access the Frontend:**
+   Open your browser and navigate to [http://localhost:80](http://localhost:80) to interact with the Chat UI.
+
+### 🛠 Build Manually
+
+Flare AI RAG is composed of a Python-based backend and a JavaScript frontend. Follow these steps for manual setup:
+
+#### Backend Setup
 
 1. **Install Dependencies:**
-   Install all required dependencies by running:
+   Use [uv](https://docs.astral.sh/uv/getting-started/installation/) to install backend dependencies:
 
    ```bash
    uv sync --all-extras
@@ -60,12 +71,36 @@ You can deploy Flare AI RAG using Docker or set up the backend and frontend manu
    docker run -p 6333:6333 qdrant/qdrant
    ```
 
-3. **Configure Parameters and Run RAG:**
-   The RAG consists of a router, a retriever, and a responder, all configurable within `src/input_parameters.json`.
-   Once configured, add your query to `src/query.txt` and run:
+3. **Start the Backend:**
+   The backend runs by default on `0.0.0.0:8080`:
 
-    ```bash
-   uv run start-rag
+   ```bash
+   uv run start-backend
+   ```
+
+#### Frontend Setup
+
+1. **Install Dependencies:**
+   In the `chat-ui/` directory, install the required packages using [npm](https://nodejs.org/en/download):
+
+   ```bash
+   cd chat-ui/
+   npm install
+   ```
+
+2. **Configure the Frontend:**
+   Update the backend URL in `chat-ui/src/App.js` for testing:
+
+   ```js
+   const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
+   ```
+
+   > **Note:** Remember to change `BACKEND_ROUTE` back to `'api/routes/chat/'` after testing.
+
+3. **Start the Frontend:**
+
+   ```bash
+   npm start
    ```
 
 ## 📁 Repo Structure
@@ -73,39 +108,35 @@ You can deploy Flare AI RAG using Docker or set up the backend and frontend manu
 ```
 src/flare_ai_rag/
 ├── ai/                     # AI Provider implementations
-│   ├── init.py        # Package initialization
 │   ├── base.py            # Abstract base classes
 │   ├── gemini.py          # Google Gemini integration
 │   ├── model.py           # Model definitions
 │   └── openrouter.py      # OpenRouter integration
+├── api/                    # API layer
+│   ├── middleware/        # Request/response middleware
+│   └── routes/           # API endpoint definitions
 ├── attestation/           # TEE security layer
-│   ├── init.py
 │   ├── simulated_token.txt
 │   ├── vtpm_attestation.py  # vTPM client
 │   └── vtpm_validation.py   # Token validation
 ├── responder/            # Response generation
-│   ├── init.py
 │   ├── base.py           # Base responder interface
 │   ├── config.py         # Response configuration
 │   ├── prompts.py        # System prompts
 │   └── responder.py      # Main responder logic
 ├── retriever/            # Document retrieval
-│   ├── init.py
 │   ├── base.py          # Base retriever interface
 │   ├── config.py        # Retriever configuration
 │   ├── qdrant_collection.py  # Qdrant collection management
 │   └── qdrant_retriever.py   # Qdrant implementation
 ├── router/               # API routing
-│   ├── init.py
 │   ├── base.py          # Base router interface
 │   ├── config.py        # Router configuration
 │   ├── prompts.py       # Router prompts
 │   └── router.py        # Main routing logic
 ├── utils/               # Utility functions
-│   ├── init.py
 │   ├── file_utils.py    # File operations
 │   └── parser_utils.py  # Input parsing
-├── init.py          # Package initialization
 ├── input_parameters.json # Configuration parameters
 ├── main.py              # Application entry point
 ├── query.txt           # Sample queries
@@ -215,7 +246,6 @@ If you encounter issues, follow these steps:
 ## 💡 Next Steps
 
 Design and implement a knowledge ingestion pipeline, with a demonstration interface showing practical applications for developers and users.
-All code uses the TEE Setup which can be found in the [flare-ai-defai](https://github.com/flare-foundation/flare-ai-defai) repository.
 
 _N.B._ Other vector databases can be used, provided they run within the same Docker container as the RAG system, since the deployment will occur in a TEE.
 
