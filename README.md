@@ -28,7 +28,7 @@ Before getting started, ensure you have:
 
 You can deploy Flare AI RAG using Docker or set up the backend and frontend manually.
 
-### Environment Setup
+#### Environment Setup
 
 1. **Prepare the Environment File:**
    Rename `.env.example` to `.env` and update the variables accordingly. (e.g. your [Gemini API key](https://aistudio.google.com/app/apikey))
