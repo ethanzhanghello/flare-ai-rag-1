@@ -1,13 +1,25 @@
+"""
+RAG Knowledge API Main Application Module
+
+This module initializes and configures the FastAPI application for the RAG backend.
+It sets up CORS middleware, loads configuration and data, and wires together the
+Gemini-based Router, Retriever, and Responder components into a chat endpoint.
+"""
+
 import pandas as pd
 import structlog
+import uvicorn
+from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
+from flare_ai_rag.api import ChatRouter
 from flare_ai_rag.responder import GeminiResponder, ResponderConfig
 from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_collection
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
-from flare_ai_rag.utils import load_json, load_txt, save_json
+from flare_ai_rag.utils import load_json
 
 logger = structlog.get_logger(__name__)
 
@@ -83,58 +95,72 @@ def setup_responder(input_config: dict) -> GeminiResponder:
     return GeminiResponder(client=gemini_provider, responder_config=responder_config)
 
 
-def main() -> None:
+def create_app() -> FastAPI:
+    """
+    Create and configure the FastAPI application instance.
+
+    This function:
+      1. Creates a new FastAPI instance with optional CORS middleware.
+      2. Loads configuration.
+      3. Sets up the Gemini Router, Qdrant Retriever, and Gemini Responder.
+      4. Loads RAG data and (re)generates the Qdrant collection.
+      5. Initializes a ChatRouter that wraps the RAG pipeline.
+      6. Registers the chat endpoint under the /chat prefix.
+
+    Returns:
+        FastAPI: The configured FastAPI application instance.
+    """
+    app = FastAPI(title="RAG Knowledge API", version="1.0", redirect_slashes=False)
+
+    # Optional: configure CORS middleware using settings.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     # Load input configuration.
     input_config = load_json(settings.input_path / "input_parameters.json")
 
-    # Set up the Gemini Router
-    router = setup_router(input_config)
-
-    # Load data
+    # Load RAG data.
     df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
     logger.info("Loaded CSV Data.", num_rows=len(df_docs))
 
-    # Set up qdrant client.
+    # Set up the RAG components: 1. Gemini Router
+    router_component = setup_router(input_config)
+
+    # 2a. Set up Qdrant client.
     qdrant_client = setup_qdrant(input_config)
 
-    # Set up retriever. (Use Gemini Embedding.)
-    retriever = setup_retriever(qdrant_client, input_config, df_docs)
+    # 2b. Set up the Retriever.
+    retriever_component = setup_retriever(qdrant_client, input_config, df_docs)
 
-    # Set up responder. (Use Gemini Provider.)
-    responder = setup_responder(input_config)
+    # 3. Set up the Responder.
+    responder_component = setup_responder(input_config)
 
-    # Process user query.
-    query = load_txt(settings.input_path / "query.txt")
-    classification = router.route_query(query)
-    logger.info(
-        "Queried has been classified by the Router.", classification=classification
+    # Create an APIRouter for chat endpoints and initialize ChatRouter.
+    chat_router = ChatRouter(
+        router=APIRouter(),
+        query_router=router_component,
+        retriever=retriever_component,
+        responder=responder_component,
     )
+    app.include_router(chat_router.router, prefix="/api/routes/chat", tags=["chat"])
 
-    if classification == "ANSWER":
-        retrieved_docs = retriever.semantic_search(query, top_k=5)
-        logger.info("Docs have been retrieved.")
+    return app
 
-        # Prepare answer
-        answer = responder.generate_response(query, retrieved_docs)
-        logger.info("Response has been generated.", answer=answer)
 
-        # Save answer
-        output_file = settings.data_path / "rag_answer.json"
-        save_json(
-            {
-                "query": query,
-                "answer": answer,
-            },
-            output_file,
-        )
+app = create_app()
 
-    elif classification == "CLARIFY":
-        logger.info("Your query needs clarification. Please provide more details.")
-    elif classification == "REJECT":
-        logger.info("Your query has been rejected as it is out of scope.")
-    else:
-        logger.info("Unexpected classification.", classification=classification)
+
+def start() -> None:
+    """
+    Start the FastAPI application server.
+    """
+    uvicorn.run(app, host="0.0.0.0", port=8080)  # noqa: S104
 
 
 if __name__ == "__main__":
-    main()
+    start()

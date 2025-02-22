@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     open_router_base_url: str = "https://openrouter.ai/api/v1"
     open_router_api_key: str = ""
 
+    # Restrict backend listener to specific IPs
+    cors_origins: list[str] = ["*"]
+
     # Path Settings
     data_path: Path = create_path("data")
     input_path: Path = create_path("flare_ai_rag")
