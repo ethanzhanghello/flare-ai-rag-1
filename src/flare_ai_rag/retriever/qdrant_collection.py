@@ -13,6 +13,11 @@ logger = structlog.get_logger(__name__)
 def _create_collection(
     client: QdrantClient, collection_name: str, vector_size: int
 ) -> None:
+    """
+    Creates a Qdrant collection with the given parameters.
+    :param collection_name: Name of the collection.
+    :param vector_size: Dimension of the vectors.
+    """
     client.recreate_collection(
         collection_name=collection_name,
         vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
@@ -25,6 +30,7 @@ def generate_collection(
     retriever_config: RetrieverConfig,
     embedding_client: GeminiEmbedding,
 ) -> None:
+    """Routine for generating a Qdrant collection for a specific CSV file type."""
     _create_collection(
         qdrant_client, retriever_config.collection_name, retriever_config.vector_size
     )
@@ -54,6 +60,7 @@ def generate_collection(
             )
         except google.api_core.exceptions.InvalidArgument as e:
             # Check if it's the known "Request payload size exceeds the limit" error
+            # If so, downgrade it to a warning
             if "400 Request payload size exceeds the limit" in str(e):
                 logger.warning(
                     "Skipping document due to size limit.",
