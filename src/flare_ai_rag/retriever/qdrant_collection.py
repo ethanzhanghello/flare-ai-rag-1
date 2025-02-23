@@ -1,3 +1,4 @@
+import google.api_core.exceptions
 import pandas as pd
 import structlog
 from qdrant_client import QdrantClient
@@ -12,12 +13,6 @@ logger = structlog.get_logger(__name__)
 def _create_collection(
     client: QdrantClient, collection_name: str, vector_size: int
 ) -> None:
-    """
-    Creates a Qdrant collection with the given parameters.
-
-    :param collection_name: Name of the collection.
-    :param vector_size: Dimension of the vectors.
-    """
     client.recreate_collection(
         collection_name=collection_name,
         vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
@@ -30,8 +25,6 @@ def generate_collection(
     retriever_config: RetrieverConfig,
     embedding_client: GeminiEmbedding,
 ) -> None:
-    """Routine for generating a Qdrant collection for a specific CSV file type."""
-    # Create the collection.
     _create_collection(
         qdrant_client, retriever_config.collection_name, retriever_config.vector_size
     )
@@ -39,13 +32,11 @@ def generate_collection(
         "Created the collection.", collection_name=retriever_config.collection_name
     )
 
-    # For each document in the CSV, compute its embedding and prepare a Qdrant point.
     points = []
     for i, row in df_docs.iterrows():
         doc_id = i
         content = row["Contents"]
 
-        # Check if content is missing or not a string.
         if not isinstance(content, str):
             logger.warning(
                 "Skipping document due to missing or invalid content.",
@@ -54,34 +45,47 @@ def generate_collection(
             continue
 
         try:
-            # Compute the embedding for the document content.
             embedding = embedding_client.embed_content(
                 embedding_model=retriever_config.embedding_model,
                 task_type=EmbeddingTaskType.RETRIEVAL_DOCUMENT,
                 contents=content,
                 title=str(row["Filename"]),
             )
-        except Exception as e:
+        except google.api_core.exceptions.InvalidArgument as e:
+            # Check if it's the known "Request payload size exceeds the limit" error
+            if "400 Request payload size exceeds the limit" in str(e):
+                logger.warning(
+                    "Skipping document due to size limit.",
+                    filename=row["Filename"],
+                )
+                continue
+            # Log the full traceback for other InvalidArgument errors
             logger.exception(
-                "Error encoding document.", filename=row["Filename"], error=str(e)
+                "Error encoding document (InvalidArgument).",
+                filename=row["Filename"],
+            )
+            continue
+        except Exception:
+            # Log the full traceback for any other errors
+            logger.exception(
+                "Error encoding document (general).",
+                filename=row["Filename"],
             )
             continue
 
-        # Prepare the payload.
         payload = {
             "filename": row["Filename"],
             "metadata": row["Metadata"],
             "text": content,
         }
 
-        # Create a Qdrant point.
-        point = PointStruct(id=doc_id, vector=embedding, payload=payload)  # pyright: ignore [reportArgumentType]
+        point = PointStruct(id=doc_id, vector=embedding, payload=payload)
         points.append(point)
 
     if points:
-        # Upload the points into the Qdrant collection.
         qdrant_client.upsert(
-            collection_name=retriever_config.collection_name, points=points
+            collection_name=retriever_config.collection_name,
+            points=points,
         )
         logger.info(
             "Collection generated and documents inserted into Qdrant successfully.",
