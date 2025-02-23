@@ -33,8 +33,9 @@ def generate_collection(
     )
 
     points = []
-    for i, row in df_docs.iterrows():
-        doc_id = str(i)  # Convert index to string for ExtendedPointId compatibility
+    for idx, (_, row) in enumerate(
+        df_docs.iterrows(), start=1
+    ):  # Using _ for unused variable
         content = row["Contents"]
 
         if not isinstance(content, str):
@@ -80,8 +81,10 @@ def generate_collection(
         }
 
         point = PointStruct(
-            id=doc_id, vector=embedding, payload=payload
-        )  # Using string ID
+            id=idx,  # Using integer ID starting from 1
+            vector=embedding,
+            payload=payload,
+        )
         points.append(point)
 
     if points:
