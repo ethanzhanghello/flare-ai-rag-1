@@ -1,4 +1,11 @@
-# Stage 1: Build Backend
+# Stage 1: Build Frontend
+FROM node:18-alpine AS frontend-builder
+WORKDIR /frontend
+COPY chat-ui/ .
+RUN npm install
+RUN npm run build
+
+# Stage 2: Build Backend
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS backend-builder
 WORKDIR /flare-ai-rag
 COPY pyproject.toml README.md ./
@@ -7,7 +14,7 @@ RUN uv venv .venv && \
     . .venv/bin/activate && \
     uv pip install -e .
 
-# Stage 2: Final Image
+# Stage 3: Final Image
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 # Install OS-level dependencies needed for Qdrant
 RUN apt-get update && \
@@ -15,6 +22,8 @@ RUN apt-get update && \
     wget \
     tar \
     curl \
+    nginx \
+    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -29,11 +38,24 @@ RUN wget https://github.com/qdrant/qdrant/releases/download/v1.13.4/qdrant-x86_6
     mv qdrant /usr/local/bin/ && \
     rm qdrant-x86_64-unknown-linux-musl.tar.gz
 
+# Make entrypoint executable
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Copy frontend files
+COPY --from=frontend-builder /frontend/build /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/sites-enabled/default
+
+# Setup supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Allow workload operator to override environment variables
 LABEL "tee.launch_policy.allow_env_override"="OPEN_ROUTER_API_KEY"
 LABEL "tee.launch_policy.log_redirect"="always"
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+EXPOSE 80
 
-CMD ["/app/entrypoint.sh"]
+# Start supervisor (which will start both nginx and the backend)
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
