@@ -33,7 +33,7 @@ You can deploy Flare AI RAG using Docker or set up the backend and frontend manu
 1. **Prepare the Environment File:**
    Rename `.env.example` to `.env` and update the variables accordingly. (e.g. your [Gemini API key](https://aistudio.google.com/app/apikey))
 
-### Build using Docker (Recommended) -- [WIP]
+### Build using Docker (Recommended)
 
 1. **Build the Docker Image:**
 
@@ -257,10 +257,10 @@ Design and implement a knowledge ingestion pipeline, with a demonstration interf
 
 _N.B._ Other vector databases can be used, provided they run within the same Docker container as the RAG system, since the deployment will occur in a TEE.
 
-- **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare’s GitHub, blogs, documentation). BigQuery integration would be desirable.
+- **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare's GitHub, blogs, documentation). BigQuery integration would be desirable.
 - **Intelligent Query & Data Processing**: Use recommended AI models to refine the data processing pipeline, including pre-processing steps that optimize and clean incoming data, ensuring higher-quality context retrieval. (_e.g._ Use an LLM to reformulate or expand user queries before passing them to the retriever, improving the precision and recall of the semantic search.)
 - **Advanced Context Management**: Develop an intelligent context management system that:
   - Implements Dynamic Relevance Scoring to rank documents by their contextual importance.
   - Optimizes the Context Window to balance the amount of information sent to LLMs.
   - Includes Source Verification Mechanisms to assess and validate the reliability of the data sources.
-- **Improved Retrieval & Response Pipelines**: Integrate hybrid search techniques (combining semantic and keyword-based methods) for better retrieval, and implement completion checks to verify that the responder’s output is complete and accurate (potentially allow an iterative feedback loop for refining the final answer).
+- **Improved Retrieval & Response Pipelines**: Integrate hybrid search techniques (combining semantic and keyword-based methods) for better retrieval, and implement completion checks to verify that the responder's output is complete and accurate (potentially allow an iterative feedback loop for refining the final answer).
