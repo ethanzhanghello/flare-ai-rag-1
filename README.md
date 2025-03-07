@@ -119,6 +119,11 @@ src/flare_ai_rag/
 │   ├── simulated_token.txt
 │   ├── vtpm_attestation.py  # vTPM client
 │   └── vtpm_validation.py   # Token validation
+├── prompts/              # AI system prompts & templates
+│    ├── library.py        # Prompt module library
+│    ├── schemas.py        # Schema definitions
+│    ├── service.py        # Prompt service module
+│    └── templates.py       # Prompt templates
 ├── responder/            # Response generation
 │   ├── base.py           # Base responder interface
 │   ├── config.py         # Response configuration
