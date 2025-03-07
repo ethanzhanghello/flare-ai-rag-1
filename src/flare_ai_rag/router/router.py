@@ -27,18 +27,21 @@ class GeminiRouter(BaseQueryRouter):
         self.client = client
 
     @override
-    def route_query(self, query: str) -> str:
+    def route_query(
+        self,
+        prompt: str,
+        response_mime_type: str | None = None,
+        response_schema: Any | None = None,
+    ) -> str:
         """
         Analyze the query using the configured prompt and classify it.
         """
-        # Compose the prompt using the base prompt from config.
-        prompt = self.router_config.router_prompt + f"\nQuery: {query}"
         logger.debug("Sending prompt...", prompt=prompt)
         # Use the generate method of GeminiProvider to obtain a response.
         response = self.client.generate(
-            prompt,
-            response_mime_type=None,
-            response_schema=None,
+            prompt=prompt,
+            response_mime_type=response_mime_type,
+            response_schema=response_schema,
         )
         # Parse the response to extract classification.
         classification = (
@@ -72,18 +75,22 @@ class QueryRouter(BaseQueryRouter):
         """
         self.router_config = config
         self.client = client
+        self.query = ""
 
     @override
-    def route_query(self, query: str) -> str:
+    def route_query(
+        self,
+        prompt: str,
+        response_mime_type: str | None = None,
+        response_schema: Any | None = None,
+    ) -> str:
         """
         Analyze the query using the configured prompt and classify it.
 
         :param query: The user query.
         :return: One of the classification options defined in the config.
-        """
-        # Set the base prompt
-        prompt = self.router_config.router_prompt + f"\nQuery: {query}"
 
+        """
         payload: dict[str, Any] = {
             "model": self.router_config.model.model_id,
             "messages": [

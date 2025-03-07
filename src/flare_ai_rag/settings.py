@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     Combines both infrastructure and consensus settings.
     """
 
+    # Flag to enable/disable attestation simulation
+    simulate_attestation: bool = False
+
     # Gemini Settings
     gemini_api_key: str = ""
 

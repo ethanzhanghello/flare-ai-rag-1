@@ -15,6 +15,8 @@ from qdrant_client import QdrantClient
 
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
 from flare_ai_rag.api import ChatRouter
+from flare_ai_rag.attestation import Vtpm
+from flare_ai_rag.prompts import PromptService
 from flare_ai_rag.responder import GeminiResponder, ResponderConfig
 from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_collection
 from flare_ai_rag.router import GeminiRouter, RouterConfig
@@ -24,20 +26,20 @@ from flare_ai_rag.utils import load_json
 logger = structlog.get_logger(__name__)
 
 
-def setup_router(input_config: dict) -> GeminiRouter:
-    """Initialize the Gemini Provider and the Gemini Router."""
+def setup_router(input_config: dict) -> tuple[GeminiProvider, GeminiRouter]:
+    """Initialize a Gemini Provider for routing."""
     # Setup router config
     router_model_config = input_config["router_model"]
     router_config = RouterConfig.load(router_model_config)
 
     # Setup Gemini client based on Router config
+    # Older version used a system_instruction
     gemini_provider = GeminiProvider(
-        api_key=settings.gemini_api_key,
-        model=router_config.model.model_id,
-        system_instruction=router_config.system_prompt,
+        api_key=settings.gemini_api_key, model=router_config.model.model_id
     )
+    gemini_router = GeminiRouter(client=gemini_provider, config=router_config)
 
-    return GeminiRouter(client=gemini_provider, config=router_config)
+    return gemini_provider, gemini_router
 
 
 def setup_retriever(
@@ -128,8 +130,8 @@ def create_app() -> FastAPI:
     df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
     logger.info("Loaded CSV Data.", num_rows=len(df_docs))
 
-    # Set up the RAG components: 1. Gemini Router
-    router_component = setup_router(input_config)
+    # Set up the RAG components: 1. Gemini Provider
+    base_ai, router_component = setup_router(input_config)
 
     # 2a. Set up Qdrant client.
     qdrant_client = setup_qdrant(input_config)
@@ -143,9 +145,12 @@ def create_app() -> FastAPI:
     # Create an APIRouter for chat endpoints and initialize ChatRouter.
     chat_router = ChatRouter(
         router=APIRouter(),
+        ai=base_ai,
         query_router=router_component,
         retriever=retriever_component,
         responder=responder_component,
+        attestation=Vtpm(simulate=settings.simulate_attestation),
+        prompts=PromptService(),
     )
     app.include_router(chat_router.router, prefix="/api/routes/chat", tags=["chat"])
 

@@ -1,19 +1,11 @@
 """
-Prompt Service Module for Flare AI DeFAI
+Prompt Service Module for Flare AI RAG
 
 This module provides a service layer for managing and formatting AI prompts.
 It acts as a wrapper around the PromptLibrary, adding error handling and
 logging capabilities. The service is responsible for retrieving prompts,
 formatting them with provided parameters, and returning the formatted prompts
 along with their associated metadata.
-
-Example:
-    ```python
-    service = PromptService()
-    prompt, mime_type, schema = service.get_formatted_prompt(
-        "token_send", amount="100", address="0x123..."
-    )
-    ```
 """
 
 from typing import Any
@@ -40,17 +32,6 @@ class PromptService:
         library (PromptLibrary): Instance of the prompt library containing all
             prompt templates
         logger (BoundLogger): Structured logger bound with service context
-
-    Example:
-        ```python
-        service = PromptService()
-        try:
-            prompt, mime_type, schema = service.get_formatted_prompt(
-                "token_send", to_address="0x123...", amount=100
-            )
-        except Exception as e:
-            print(f"Failed to format prompt: {e}")
-        ```
     """
 
     def __init__(self) -> None:
@@ -88,19 +69,6 @@ class PromptService:
             KeyError: If the requested prompt_name doesn't exist in the library
             ValueError: If required format parameters are missing
             Exception: For other formatting or processing errors
-
-        Example:
-            ```python
-            service = PromptService()
-            try:
-                prompt, mime_type, schema = service.get_formatted_prompt(
-                    "token_swap", from_token="ETH", to_token="USDC", amount=1.5
-                )
-            except KeyError:
-                print("Prompt template not found")
-            except ValueError:
-                print("Missing required parameters")
-            ```
 
         Logs:
             - Exceptions during prompt formatting with prompt name and error details
