@@ -3,6 +3,7 @@ from typing import Any, override
 from flare_ai_rag.ai import GeminiProvider, OpenRouterClient
 from flare_ai_rag.responder import BaseResponder, ResponderConfig
 from flare_ai_rag.utils import parse_chat_response
+from flare_ai_rag.retriever.qdrant_retriever import search_relevant_documents  # Import retrieval function
 
 
 class GeminiResponder(BaseResponder):
@@ -12,8 +13,8 @@ class GeminiResponder(BaseResponder):
         """
         Initialize the responder with a GeminiProvider.
 
-        :param client: An instance of OpenRouterClient.
-        :param model: The model identifier to be used by the API.
+        :param client: An instance of GeminiProvider.
+        :param responder_config: Configuration settings for AI responses.
         """
         self.client = client
         self.responder_config = responder_config
@@ -21,30 +22,60 @@ class GeminiResponder(BaseResponder):
     @override
     def generate_response(self, query: str, retrieved_documents: list[dict]) -> str:
         """
-        Generate a final answer using the query and the retrieved context.
+        Generate a final answer using the query, retrieved context, and real-world data.
+        Dynamically adjusts retrieval size, includes citations, and handles unclear responses.
 
         :param query: The input query.
         :param retrieved_documents: A list of dictionaries containing retrieved docs.
         :return: The generated answer as a string.
         """
-        context = "List of retrieved documents:\n"
+        # Retrieve additional context from BigQuery & Flare
+        external_data = search_relevant_documents(query, top_k=5)["extra_data"]
 
-        # Build context from the retrieved documents.
-        for idx, doc in enumerate(retrieved_documents, start=1):
-            identifier = doc.get("metadata", {}).get("filename", f"Doc{idx}")
-            context += f"Document {identifier}:\n{doc.get('text', '')}\n\n"
+        # Dynamically adjust the number of retrieved documents
+        num_docs = min(len(retrieved_documents), 8) if len(query) > 100 else min(len(retrieved_documents), 5)
 
-        # Compose the prompt
-        prompt = context + f"User query: {query}\n" + self.responder_config.query_prompt
+        context = "📚 List of retrieved documents:\n"
+        citations = []
 
-        # Use the generate method of GeminiProvider to obtain a response.
+        for idx, doc in enumerate(retrieved_documents[:num_docs], start=1):
+            title = doc.get("title", f"Document {idx}")
+            author = doc.get("author", "Unknown Author")
+            date = doc.get("date", "Unknown Date")
+            text_snippet = doc.get("text", "")[:200]  # Limit snippet length for readability
+
+            context += f"📌 {title} (by {author}, {date}):\n{text_snippet}...\n\n"
+            citations.append(f"[{idx}] {title}")
+
+        # Add external data (GitHub repos, Google Trends, Flare blockchain)
+        if external_data:
+            context += "\n🌍 Additional Data from BigQuery & Flare:\n"
+            for idx, entry in enumerate(external_data, start=len(citations) + 1):
+                context += f"🔹 {entry['source']}: {entry['text'][:200]}...\n"
+                citations.append(f"[{idx}] {entry['source']}")
+
+        # Compose the structured prompt for Gemini
+        prompt = (
+            f"{context}User query: {query}\n"
+            f"{self.responder_config.query_prompt}"
+        )
+
+        # Generate response using Gemini
         response = self.client.generate(
             prompt,
             response_mime_type=None,
             response_schema=None,
         )
 
-        return response.text
+        # Detect unclear responses and refine using external data
+        unclear_responses = ["I'm not sure", "I don't know", "Sorry", "I cannot find"]
+        if any(phrase.lower() in response.text.lower() for phrase in unclear_responses) or len(response.text) < 30:
+            print("🔄 Low-confidence response detected. Refining answer with more retrieval...")
+            refined_query = f"Provide more details about: {query}"
+            return self.generate_response(refined_query, retrieved_documents)
+
+        # Append citations to response
+        return response.text + "\n\n📚 Sources: " + ", ".join(citations)
 
 
 class OpenRouterResponder(BaseResponder):
@@ -55,7 +86,7 @@ class OpenRouterResponder(BaseResponder):
         Initialize the responder with an OpenRouter client and the model to use.
 
         :param client: An instance of OpenRouterClient.
-        :param model: The model identifier to be used by the API.
+        :param responder_config: Configuration settings for AI responses.
         """
         self.client = client
         self.responder_config = responder_config
@@ -63,23 +94,42 @@ class OpenRouterResponder(BaseResponder):
     @override
     def generate_response(self, query: str, retrieved_documents: list[dict]) -> str:
         """
-        Generate a final answer using the query and the retrieved context,
-        and include citations.
+        Generate a final answer using the query, retrieved documents, and additional knowledge.
+        Dynamically adjusts retrieval and citation inclusion.
 
         :param query: The input query.
         :param retrieved_documents: A list of dictionaries containing retrieved docs.
         :return: The generated answer as a string.
         """
-        context = "List of retrieved documents:\n"
+        # Retrieve external data (BigQuery & Flare)
+        external_data = search_relevant_documents(query, top_k=5)["extra_data"]
 
-        # Build context from the retrieved documents.
+        context = "📚 List of retrieved preprocessed documents:\n"
+        citations = []
+
         for idx, doc in enumerate(retrieved_documents, start=1):
-            identifier = doc.get("metadata", {}).get("filename", f"Doc{idx}")
-            context += f"Document {identifier}:\n{doc.get('text', '')}\n\n"
+            title = doc.get("title", f"Document {idx}")
+            author = doc.get("author", "Unknown Author")
+            date = doc.get("date", "Unknown Date")
+            text_snippet = doc.get("text", "")[:200]
 
-        # Compose the prompt
-        prompt = context + f"User query: {query}\n" + self.responder_config.query_prompt
-        # Prepare the payload for the completion endpoint.
+            context += f"📌 {title} (by {author}, {date}):\n{text_snippet}...\n\n"
+            citations.append(f"[{idx}] {title}")
+
+        # Add external knowledge from real-world datasets
+        if external_data:
+            context += "\n🌍 Additional Data from BigQuery & Flare:\n"
+            for idx, entry in enumerate(external_data, start=len(citations) + 1):
+                context += f"🔹 {entry['source']}: {entry['text'][:200]}...\n"
+                citations.append(f"[{idx}] {entry['source']}")
+
+        # Compose the structured prompt for OpenRouter
+        prompt = (
+            f"{context}User query: {query}\n"
+            f"{self.responder_config.query_prompt}"
+        )
+
+        # Prepare the payload for OpenRouter API.
         payload: dict[str, Any] = {
             "model": self.responder_config.model.model_id,
             "messages": [
@@ -96,4 +146,4 @@ class OpenRouterResponder(BaseResponder):
         # Send the prompt to the OpenRouter API.
         response = self.client.send_chat_completion(payload)
 
-        return parse_chat_response(response)
+        return parse_chat_response(response) + "\n\n📚 Sources: " + ", ".join(citations)
