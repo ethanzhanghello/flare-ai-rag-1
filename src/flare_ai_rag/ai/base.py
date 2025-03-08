@@ -5,6 +5,15 @@ from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 import httpx
 import requests
 
+from enum import Enum
+
+class EmbeddingTaskType(Enum):
+    """
+    Enum representing different embedding tasks (retrieval query vs. document embeddings).
+    """
+    RETRIEVAL_QUERY = "retrieval_query"
+    RETRIEVAL_DOCUMENT = "retrieval_document"
+
 
 @dataclass
 class ModelResponse:

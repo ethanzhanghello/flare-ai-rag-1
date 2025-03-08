@@ -105,3 +105,12 @@ class AsyncOpenRouterClient(AsyncBaseClient):
         """
         endpoint = "/chat/completions"
         return await self._post(endpoint, payload)
+
+from enum import Enum
+
+class EmbeddingTaskType(Enum):
+    """
+    Enum representing different embedding tasks (retrieval query vs. document embeddings).
+    """
+    RETRIEVAL_QUERY = "retrieval_query"
+    RETRIEVAL_DOCUMENT = "retrieval_document"

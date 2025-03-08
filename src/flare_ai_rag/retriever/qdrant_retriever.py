@@ -1,5 +1,5 @@
 import structlog  # Ensure logger is available
-from typing import override
+from typing import override, Any
 from qdrant_client import QdrantClient
 from flare_ai_rag.ai import EmbeddingTaskType, GeminiEmbedding
 from flare_ai_rag.retriever.base import BaseRetriever
@@ -58,4 +58,44 @@ class QdrantRetriever(BaseRetriever):
             else:
                 logger.warning(f"⚠️ Missing payload for search result: {hit}")
     
-        return output
+        return output["standard_docs"] + output["extra_data"]
+
+def search_relevant_documents(query: str, top_k: int = 5) -> dict[str, list[dict[str, Any]]]:
+    """
+    Wrapper function to call `semantic_search` from `QdrantRetriever`.
+    Ensures correct parameter types before retrieving documents.
+    """
+    try:
+        
+        # ✅ Initialize Qdrant Client
+        qdrant_client = QdrantClient(host="localhost", port=6333)
+
+        # ✅ Correct RetrieverConfig Initialization
+        retriever_config = RetrieverConfig(
+            embedding_model="models/text-embedding-004",
+            collection_name="documents",
+            vector_size=768,
+            host="localhost",
+            port=6333
+        )
+
+        # ✅ Initialize Gemini Embedding
+        embedding_client = GeminiEmbedding("AIzaSyB0_jJzPYZPWTm-Rq5wUbNXH9k3K26P3Ck")
+
+        retriever = QdrantRetriever(
+            client=qdrant_client,
+            retriever_config=retriever_config,
+            embedding_client=embedding_client,
+        )
+
+        # ✅ Ensure `semantic_search` returns a dictionary
+        retrieved_data = retriever.semantic_search(query=query, top_k=top_k)
+        if not isinstance(retrieved_data, dict):
+            raise TypeError(f"semantic_search() should return a dict, but got {type(retrieved_data)}")
+
+        return retrieved_data
+    
+    except Exception as e:
+        logger.error(f"Error in search_relevant_documents: {e}")
+        return {"standard_docs": [], "extra_data": []}  # ✅ Return an empty dictionary instead of a list
+
