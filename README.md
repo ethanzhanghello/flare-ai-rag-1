@@ -262,7 +262,7 @@ Design and implement a knowledge ingestion pipeline, with a demonstration interf
 
 _N.B._ Other vector databases can be used, provided they run within the same Docker container as the RAG system, since the deployment will occur in a TEE.
 
-- **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare's GitHub, blogs, documentation). BigQuery integration would be desirable.
+- **Enhanced Data Ingestion & Indexing**: Explore more sophisticated data structures for improved indexing and retrieval, and expand beyond a CSV format to include additional data sources (_e.g._, Flare's GitHub, blogs, documentation).
 - **Intelligent Query & Data Processing**: Use recommended AI models to refine the data processing pipeline, including pre-processing steps that optimize and clean incoming data, ensuring higher-quality context retrieval. (_e.g._ Use an LLM to reformulate or expand user queries before passing them to the retriever, improving the precision and recall of the semantic search.)
 - **Advanced Context Management**: Develop an intelligent context management system that:
   - Implements Dynamic Relevance Scoring to rank documents by their contextual importance.
