@@ -1,13 +1,12 @@
 import google.api_core.exceptions
 import pandas as pd
 import structlog
+import os
+import json
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 from flare_ai_rag.ai import EmbeddingTaskType, GeminiEmbedding
 from flare_ai_rag.retriever.config import RetrieverConfig
-
-import os
-import json
 
 # ✅ Ensure Structlog is Configured
 structlog.configure(
@@ -15,17 +14,13 @@ structlog.configure(
         structlog.processors.JSONRenderer(),  # Outputs structured logs
     ]
 )
-
 logger = structlog.get_logger(__name__)
-
 
 PROCESSED_DIR = "processed_data/"  # Folder where preprocessed & external data is stored
 
 def _create_collection(client: QdrantClient, collection_name: str, vector_size: int) -> None:
     """
     Creates a Qdrant collection with the given parameters.
-    :param collection_name: Name of the collection.
-    :param vector_size: Dimension of the vectors.
     """
     client.recreate_collection(
         collection_name=collection_name,
@@ -39,7 +34,7 @@ def generate_collection(
     embedding_client: GeminiEmbedding,
 ) -> None:
     """
-    Routine for generating a Qdrant collection. Now supports preprocessed data & external datasets.
+    Routine for generating a Qdrant collection with support for Flare FTSO data.
     """
     _create_collection(qdrant_client, retriever_config.collection_name, retriever_config.vector_size)
 
@@ -55,7 +50,7 @@ def generate_collection(
 
     points = []
     
-    # Process standard documents
+    # ✅ Process standard documents
     for idx, (_, row) in enumerate(df_docs.iterrows(), start=1):
         file_name = row["file_name"]
         content = row["content"]
@@ -104,24 +99,27 @@ def generate_collection(
 
         points.append(PointStruct(id=idx, vector=embedding, payload=payload))
 
-    # Process external datasets (BigQuery GitHub, Google Trends, Flare)
-    dataset_files = ["github_data.json", "google_trends.json", "flare_data.json"]
-    for dataset in dataset_files:
-        dataset_path = os.path.join(PROCESSED_DIR, dataset)
-        if os.path.exists(dataset_path):
-            with open(dataset_path, "r", encoding="utf-8") as meta_file:
-                dataset_content = json.load(meta_file)
-            
-            for idx, entry in enumerate(dataset_content, start=len(points) + 1):
-                text_content = " ".join([str(value) for value in entry.values()])
+    # ✅ Process external Flare FTSO data
+    flare_data_path = os.path.join(PROCESSED_DIR, "flare_data.json")
+    if os.path.exists(flare_data_path):
+        with open(flare_data_path, "r", encoding="utf-8") as meta_file:
+            flare_content = json.load(meta_file)
+
+        for idx, entry in enumerate(flare_content, start=len(points) + 1):
+            text_content = f"Flare FTSO Data: {entry}"  # Convert JSON to text format
+
+            try:
                 embedding = embedding_client.embed_content(
                     embedding_model=retriever_config.embedding_model,
                     task_type=EmbeddingTaskType.RETRIEVAL_DOCUMENT,
                     contents=text_content,
-                    title=entry.get("repo_name", entry.get("term", "Unknown"))
+                    title="Flare FTSO Update"
                 )
+            except Exception as e:
+                logger.warning(f"Failed to embed Flare data: {e}")
+                continue  # Skip this entry if embedding fails
 
-                points.append(PointStruct(id=idx, vector=embedding, payload={"dataset": dataset, "text": text_content}))
+            points.append(PointStruct(id=idx, vector=embedding, payload={"dataset": "flare_data", "text": text_content}))
 
     if points:
         qdrant_client.upsert(collection_name=retriever_config.collection_name, points=points)

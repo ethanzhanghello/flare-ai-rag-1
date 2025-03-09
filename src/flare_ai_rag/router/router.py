@@ -1,5 +1,4 @@
 from typing import Any, override
-
 import structlog
 
 from flare_ai_rag.ai import GeminiProvider, OpenRouterClient
@@ -12,7 +11,6 @@ from flare_ai_rag.utils import (
 from flare_ai_rag.retriever.qdrant_retriever import search_relevant_documents  # Import retrieval function
 
 logger = structlog.get_logger(__name__)
-
 
 class GeminiRouter(BaseQueryRouter):
     """
@@ -40,30 +38,36 @@ class GeminiRouter(BaseQueryRouter):
         """
         logger.debug("Sending prompt...", prompt=prompt)
 
-        # Retrieve external knowledge (GitHub, Google Trends, Flare)
+        # ✅ Retrieve external knowledge (GitHub, Google Trends, Flare)
         retrieved_data = search_relevant_documents(prompt, top_k=5)
-        extra_data = retrieved_data["extra_data"]
+        extra_data = retrieved_data
 
         if extra_data:
             prompt += "\n🔍 External Data Context:\n"
             for entry in extra_data:
-                prompt += f"🔹 {entry['source']}: {entry['text']}\n"
+                source = entry.get("source", "Unknown")
+                text = entry.get("text", "No data available")
+                prompt += f"🔹 {source}: {text[:200]}...\n"
 
-        # Use the generate method of GeminiProvider to obtain a response.
+        # ✅ Use the generate method of GeminiProvider to obtain a response.
         response = self.client.generate(
             prompt=prompt,
             response_mime_type=response_mime_type,
             response_schema=response_schema,
         )
 
-        # Parse response to extract classification.
-        classification = (
-            parse_gemini_response_as_json(response.raw_response)
-            .get("classification", "")
-            .upper()
-        )
+        # ✅ Parse response safely
+        try:
+            classification = (
+                parse_gemini_response_as_json(response.raw_response)
+                .get("classification", "")
+                .upper()
+            )
+        except Exception as e:
+            logger.warning(f"Failed to parse Gemini response: {e}")
+            classification = self.router_config.clarify_option  # Default fallback
 
-        # Validate classification.
+        # ✅ Validate classification
         valid_options = {
             self.router_config.answer_option,
             self.router_config.clarify_option,
@@ -101,16 +105,18 @@ class QueryRouter(BaseQueryRouter):
         """
         logger.debug("Processing query routing...", prompt=prompt)
 
-        # Retrieve external data
+        # ✅ Retrieve external data
         retrieved_data = search_relevant_documents(prompt, top_k=5)
-        extra_data = retrieved_data["extra_data"]
+        extra_data = retrieved_data
 
         if extra_data:
             prompt += "\n🔍 Additional Context:\n"
             for entry in extra_data:
-                prompt += f"🔹 {entry['source']}: {entry['text']}\n"
+                source = entry.get("source", "Unknown")
+                text = entry.get("text", "No data available")
+                prompt += f"🔹 {source}: {text[:200]}...\n"
 
-        # Prepare payload for OpenRouter API.
+        # ✅ Prepare payload for OpenRouter API.
         payload: dict[str, Any] = {
             "model": self.router_config.model.model_id,
             "messages": [
@@ -124,13 +130,21 @@ class QueryRouter(BaseQueryRouter):
         if self.router_config.model.temperature is not None:
             payload["temperature"] = self.router_config.model.temperature
 
-        # Get response from OpenRouter
+        # ✅ Get response from OpenRouter
         response = self.client.send_chat_completion(payload)
-        classification = (
-            parse_chat_response_as_json(response).get("classification", "").upper()
-        )
 
-        # Validate classification
+        # ✅ Parse response safely
+        try:
+            classification = (
+                parse_chat_response_as_json(response)
+                .get("classification", "")
+                .upper()
+            )
+        except Exception as e:
+            logger.warning(f"Failed to parse OpenRouter response: {e}")
+            classification = self.router_config.clarify_option  # Default fallback
+
+        # ✅ Validate classification
         valid_options = {
             self.router_config.answer_option,
             self.router_config.clarify_option,

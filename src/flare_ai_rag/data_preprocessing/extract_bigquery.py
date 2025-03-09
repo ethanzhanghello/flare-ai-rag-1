@@ -1,4 +1,4 @@
-from google.cloud import bigquery
+"""from google.cloud import bigquery
 import os
 import json
 
@@ -6,16 +6,16 @@ import json
 client = bigquery.Client()
 
 def fetch_github_data():
-    """
+    
     Fetches recent GitHub repository information from BigQuery.
-    """
-    query = """
+    
+    query = 
     SELECT repo_name, description, created_at, pushed_at, language
     FROM `bigquery-public-data.github_repos.repositories`
     WHERE created_at > '2023-01-01'
     ORDER BY pushed_at DESC
     LIMIT 100
-    """
+    
     
     query_job = client.query(query)
     results = query_job.result()
@@ -39,16 +39,16 @@ if __name__ == "__main__":
     fetch_github_data()
 
 def fetch_google_trends():
-    """
+    
     Fetches recent trending Google search queries from BigQuery.
-    """
-    query = """
+    
+    query = 
     SELECT term, week, country_name, score
     FROM `bigquery-public-data.google_trends.international_top_terms`
     WHERE week > '2023-01-01'
     ORDER BY score DESC
     LIMIT 100
-    """
+    
     
     query_job = client.query(query)
     results = query_job.result()
@@ -70,3 +70,4 @@ def fetch_google_trends():
 if __name__ == "__main__":
     fetch_google_trends()
 
+"""
