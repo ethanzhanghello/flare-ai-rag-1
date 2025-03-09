@@ -9,9 +9,11 @@ Gemini-based Router, Retriever, and Responder components into a chat endpoint.
 import pandas as pd
 import structlog
 import uvicorn
+import os
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
+import json
 
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
 from flare_ai_rag.api import ChatRouter
@@ -22,18 +24,17 @@ from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_co
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
+from flare_ai_rag.data_preprocessing.preprocess import preprocess_documents
+from flare_ai_rag.data_preprocessing.extract_bigquery import fetch_google_trends, fetch_github_data
 
 logger = structlog.get_logger(__name__)
 
 
 def setup_router(input_config: dict) -> tuple[GeminiProvider, GeminiRouter]:
     """Initialize a Gemini Provider for routing."""
-    # Setup router config
     router_model_config = input_config["router_model"]
     router_config = RouterConfig.load(router_model_config)
 
-    # Setup Gemini client based on Router config
-    # Older version used a system_instruction
     gemini_provider = GeminiProvider(
         api_key=settings.gemini_api_key, model=router_config.model.model_id
     )
@@ -48,12 +49,17 @@ def setup_retriever(
     df_docs: pd.DataFrame,
 ) -> QdrantRetriever:
     """Initialize the Qdrant retriever."""
-    # Set up Qdrant config
     retriever_config = RetrieverConfig.load(input_config["retriever_config"])
-
-    # Set up Gemini Embedding client
     embedding_client = GeminiEmbedding(settings.gemini_api_key)
-    # (Re)generate qdrant collection
+
+    # ✅ Preprocess Documents Before Generating Collection
+    preprocess_documents(input_folder="data", output_folder="processed_data")
+
+    # ✅ Fetch & Process External Data Before Generating Collection
+    fetch_google_trends()
+    fetch_github_data()
+
+    # (Re)generate Qdrant collection with preprocessed & external data
     generate_collection(
         df_docs,
         qdrant_client,
@@ -64,7 +70,7 @@ def setup_retriever(
         "The Qdrant collection has been generated.",
         collection_name=retriever_config.collection_name,
     )
-    # Return retriever
+
     return QdrantRetriever(
         client=qdrant_client,
         retriever_config=retriever_config,
@@ -84,11 +90,9 @@ def setup_qdrant(input_config: dict) -> QdrantClient:
 
 def setup_responder(input_config: dict) -> GeminiResponder:
     """Initialize the responder."""
-    # Set up Responder Config.
     responder_config = input_config["responder_model"]
     responder_config = ResponderConfig.load(responder_config)
 
-    # Set up a new Gemini Provider based on Responder Config.
     gemini_provider = GeminiProvider(
         api_key=settings.gemini_api_key,
         model=responder_config.model.model_id,
@@ -114,7 +118,7 @@ def create_app() -> FastAPI:
     """
     app = FastAPI(title="RAG Knowledge API", version="1.0", redirect_slashes=False)
 
-    # Optional: configure CORS middleware using settings.
+    # Configure CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -123,26 +127,24 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Load input configuration.
+    # Load input configuration
     input_config = load_json(settings.input_path / "input_parameters.json")
 
-    # Load RAG data.
+    # ✅ Load & Preprocess RAG Data Before Qdrant
     df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
     logger.info("Loaded CSV Data.", num_rows=len(df_docs))
 
-    # Set up the RAG components: 1. Gemini Provider
-    base_ai, router_component = setup_router(input_config)
-
-    # 2a. Set up Qdrant client.
+    # ✅ Initialize Qdrant
     qdrant_client = setup_qdrant(input_config)
 
-    # 2b. Set up the Retriever.
+    # ✅ Setup Retriever with Preprocessed Data & External Data
     retriever_component = setup_retriever(qdrant_client, input_config, df_docs)
 
-    # 3. Set up the Responder.
+    # ✅ Setup Router & Responder
+    base_ai, router_component = setup_router(input_config)
     responder_component = setup_responder(input_config)
 
-    # Create an APIRouter for chat endpoints and initialize ChatRouter.
+    # ✅ Initialize Chat Router
     chat_router = ChatRouter(
         router=APIRouter(),
         ai=base_ai,
